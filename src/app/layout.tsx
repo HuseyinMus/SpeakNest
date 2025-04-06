@@ -18,13 +18,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr">
-      <LanguageProvider>
-        <ToastProvider>
-          <body className={inter.className}>
+      <body className={inter.className}>
+        <LanguageProvider>
+          <ToastProvider>
             {children}
-          </body>
-        </ToastProvider>
-      </LanguageProvider>
+          </ToastProvider>
+        </LanguageProvider>
+      </body>
     </html>
   );
 }

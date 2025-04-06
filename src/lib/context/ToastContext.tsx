@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Toaster, toast } from 'sonner';
 import { useLanguage } from './LanguageContext';
 
@@ -17,12 +18,38 @@ interface ToastProviderProps {
   children: ReactNode;
 }
 
-export function ToastProvider({ children }: ToastProviderProps) {
+// Client-side portal bileşeni
+function ToasterPortal() {
   const { currentLanguage } = useLanguage();
-  
-  // Mevcut dile göre metin yönünü belirleme
   const isRtl = currentLanguage === 'ar';
+  const [mounted, setMounted] = useState(false);
   
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+  
+  if (!mounted) return null;
+  
+  // Document body'ye portal oluştur
+  return ReactDOM.createPortal(
+    <Toaster 
+      position="top-right" 
+      richColors 
+      closeButton 
+      duration={3000}
+      dir={isRtl ? 'rtl' : 'ltr'}
+      toastOptions={{
+        style: {
+          fontSize: '0.875rem',
+        },
+      }}
+    />,
+    document.body
+  );
+}
+
+export function ToastProvider({ children }: ToastProviderProps) {
   // Toast fonksiyonları
   const toastFunctions: ToastContextType = {
     success: (message, options) => toast.success(message, options),
@@ -34,18 +61,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
   return (
     <ToastContext.Provider value={toastFunctions}>
       {children}
-      <Toaster 
-        position="top-right" 
-        richColors 
-        closeButton 
-        duration={3000}
-        dir={isRtl ? 'rtl' : 'ltr'}
-        toastOptions={{
-          style: {
-            fontSize: '0.875rem',
-          },
-        }}
-      />
+      <ToasterPortal />
     </ToastContext.Provider>
   );
 }
