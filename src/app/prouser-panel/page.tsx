@@ -26,30 +26,40 @@ export default function ProUserPanel() {
   
   // Toplantı seviyesi için çevirileri manuel olarak yapan yardımcı fonksiyon
   const getLevelTranslation = (level: string) => {
+    return t(`level_${level}`, getLevelFallback(level));
+  };
+
+  // Level için fallback değerlerini döndüren yardımcı fonksiyon
+  const getLevelFallback = (level: string) => {
     switch(level) {
-      case 'beginner': return t('beginnerLevel', 'Başlangıç Seviyesi');
-      case 'intermediate': return t('intermediateLevel', 'Orta Seviye');
-      case 'advanced': return t('advancedLevel', 'İleri Seviye');
-      case 'any': return t('anyLevel', 'Tüm Seviyeler');
+      case 'beginner': return 'Başlangıç Seviyesi';
+      case 'intermediate': return 'Orta Seviye';
+      case 'advanced': return 'İleri Seviye';
+      case 'any': return 'Tüm Seviyeler';
       default: return level;
     }
   };
 
   // Toplantı konusu için çevirileri manuel olarak yapan yardımcı fonksiyon
   const getTopicTranslation = (topic: string) => {
+    return t(`topic_${topic}`, getTopicFallback(topic));
+  };
+
+  // Topic için fallback değerlerini döndüren yardımcı fonksiyon
+  const getTopicFallback = (topic: string) => {
     switch(topic) {
-      case 'daily': return t('dailyConversation', 'Günlük Konuşma');
-      case 'business': return t('business', 'İş Dünyası');
-      case 'education': return t('education', 'Eğitim/Okul');
-      case 'science': return t('science', 'Bilim');
-      case 'technology': return t('technology', 'Teknoloji');
-      case 'arts': return t('arts', 'Sanat ve Kültür');
-      case 'travel': return t('travel', 'Seyahat');
-      case 'food': return t('food', 'Yemek ve Mutfak');
-      case 'sports': return t('sports', 'Spor');
-      case 'health': return t('health', 'Sağlık ve Wellness');
-      case 'environment': return t('environment', 'Çevre');
-      case 'entertainment': return t('entertainment', 'Eğlence ve Hobiler');
+      case 'daily': return 'Günlük Konuşma';
+      case 'business': return 'İş Dünyası';
+      case 'education': return 'Eğitim/Okul';
+      case 'science': return 'Bilim';
+      case 'technology': return 'Teknoloji';
+      case 'arts': return 'Sanat ve Kültür';
+      case 'travel': return 'Seyahat';
+      case 'food': return 'Yemek ve Mutfak';
+      case 'sports': return 'Spor';
+      case 'health': return 'Sağlık ve Wellness';
+      case 'environment': return 'Çevre';
+      case 'entertainment': return 'Eğlence ve Hobiler';
       default: return topic;
     }
   };
@@ -456,7 +466,7 @@ export default function ProUserPanel() {
                 <Calendar size={20} />
                 {t('myMeetings', 'Toplantılarım')}
               </h2>
-              <p className="text-white/80">Oluşturduğunuz ve katıldığınız tüm toplantıları görüntüleyin.</p>
+              <p className="text-white/80">{t('myMeetingsDescription', 'Oluşturduğunuz ve katıldığınız tüm toplantıları görüntüleyin.')}</p>
             </div>
             
             {activeMeetings.length > 0 ? (
