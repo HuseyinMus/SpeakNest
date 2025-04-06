@@ -7,7 +7,4 @@ module.exports = {
   },
   defaultNS: 'common',
   localePath: 'public/locales',
-};
-
-// Next.js config ile export etmek için
-export const nextI18NextConfig = module.exports; 
+}; 

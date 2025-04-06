@@ -96,7 +96,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         value={currentLanguage}
         onChange={handleSelectChange}
         className="form-select text-sm border border-gray-300 rounded-md py-1.5 pl-3 pr-8 appearance-none bg-white"
-        aria-label={t('selectLanguage')}
+        aria-label="Dil seçin"
       >
         {languages.map((lang) => (
           <option key={lang.code} value={lang.code}>

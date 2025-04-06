@@ -6,8 +6,11 @@ import { useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import Image from 'next/image';
 import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, Settings, LogOut } from 'lucide-react';
+import { useLanguage } from '@/lib/context/LanguageContext';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function StudentPanel() {
+  const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -164,14 +167,14 @@ export default function StudentPanel() {
   
   // Menü öğeleri
   const menuItems = [
-    { id: 'dashboard', label: 'Ana Sayfa', icon: <Home size={18} /> },
-    { id: 'sessions', label: 'Konuşma Oturumları', icon: <MessageCircle size={18} /> },
-    { id: 'practice-rooms', label: 'Pratik Odaları', icon: <Users size={18} /> },
-    { id: 'upcoming', label: 'Yaklaşan Pratiklerim', icon: <Clock size={18} /> },
-    { id: 'assignments', label: 'Ödevlerim', icon: <FileText size={18} /> },
-    { id: 'profile', label: 'Profilim', icon: <User size={18} /> },
-    { id: 'statistics', label: 'İstatistiklerim', icon: <BarChart size={18} /> },
-    { id: 'settings', label: 'Ayarlar', icon: <Settings size={18} /> },
+    { id: 'dashboard', label: t('home'), icon: <Home size={18} /> },
+    { id: 'sessions', label: t('conversationMeetings'), icon: <MessageCircle size={18} /> },
+    { id: 'practice-rooms', label: t('practiceRooms'), icon: <Users size={18} /> },
+    { id: 'upcoming', label: t('upcomingPractices'), icon: <Clock size={18} /> },
+    { id: 'assignments', label: t('assignments'), icon: <FileText size={18} /> },
+    { id: 'profile', label: t('profile'), icon: <User size={18} /> },
+    { id: 'statistics', label: t('statistics'), icon: <BarChart size={18} /> },
+    { id: 'settings', label: t('settings'), icon: <Settings size={18} /> },
   ];
 
   // Ana içerik renderlaması
@@ -181,41 +184,41 @@ export default function StudentPanel() {
         return (
           <div className="space-y-6">
             {/* Hoş geldin kartı */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-100">
-              <h2 className="text-xl font-semibold text-slate-800 mb-2">Hoş Geldin, {userProfile?.displayName || userProfile?.firstName || 'Öğrenci'}</h2>
-              <p className="text-slate-600">Bugün İngilizce pratiği yapmak için harika bir gün!</p>
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-md p-6 border border-blue-400">
+              <h2 className="text-xl font-semibold text-white mb-2">{t('welcomeMessage', { name: userProfile?.displayName || userProfile?.firstName || t('student') })}</h2>
+              <p className="text-white opacity-90">{t('todayMessage')}</p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors text-sm">
-                  Oturum Bul
+                <button className="px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 rounded-md transition-colors text-sm font-medium shadow-sm">
+                  {t('findMeeting')}
                 </button>
-                <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors text-sm">
-                  Hızlı Eşleşme
+                <button className="px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 rounded-md transition-colors text-sm font-medium shadow-sm">
+                  {t('quickMatch')}
                 </button>
               </div>
             </div>
             
-            {/* Yaklaşan Konuşma Oturumları */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
-              <div className="bg-slate-700 px-6 py-3">
-                <h2 className="text-base font-medium text-white">Yaklaşan Konuşma Oturumlarım</h2>
+            {/* Yaklaşan Konuşma Toplantıları */}
+            <div className="bg-white rounded-lg shadow-md border border-blue-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-6 py-3">
+                <h2 className="text-base font-medium text-white">{t('upcomingMeetings')}</h2>
               </div>
               <div className="p-6">
-                <div className="text-center py-8 rounded-md bg-slate-50">
-                  <p className="text-slate-500">Henüz yaklaşan konuşma oturumunuz bulunmamaktadır.</p>
+                <div className="text-center py-8 rounded-md bg-blue-50">
+                  <p className="text-blue-700">{t('noUpcomingMeetings')}</p>
                   <button 
-                    className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition-colors text-sm"
+                    className="mt-4 px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-md hover:from-indigo-700 hover:to-blue-600 transition-colors text-sm shadow-sm"
                     onClick={() => setActiveTab('sessions')}
                   >
-                    Konuşma Oturumu Bul
+                    {t('findConversationMeeting')}
                   </button>
                 </div>
                 
                 <div className="mt-4 text-right">
                   <button 
-                    className="text-slate-700 hover:text-slate-900 text-sm font-medium transition-colors"
+                    className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors"
                     onClick={() => setActiveTab('upcoming')}
                   >
-                    Tüm Yaklaşan Pratiklerimi Görüntüle →
+                    {t('viewAllUpcomingPractices')} →
                   </button>
                 </div>
               </div>
@@ -224,7 +227,7 @@ export default function StudentPanel() {
             {/* Pratik Odaları */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
               <div className="bg-slate-600 px-6 py-3">
-                <h2 className="text-base font-medium text-white">Popüler Pratik Odaları</h2>
+                <h2 className="text-base font-medium text-white">{t('popularPracticeRooms')}</h2>
               </div>
               <div className="p-6">
                 {activeCourses.length > 0 ? (
@@ -235,13 +238,13 @@ export default function StudentPanel() {
                         <p className="text-slate-600 text-sm mt-1">{course.description}</p>
                         <div className="mt-3 flex items-center justify-between">
                           <span className="text-sm text-slate-500">
-                            Host: {course.instructorName || 'Belirtilmemiş'}
+                            {t('host')}: {course.instructorName || t('notSpecified')}
                           </span>
                           <button 
                             className="text-sm px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 transition-colors"
                             onClick={() => router.push(`/courses/${course.id}`)}
                           >
-                            Odaya Katıl
+                            {t('joinRoom')}
                           </button>
                         </div>
                       </div>
@@ -249,7 +252,7 @@ export default function StudentPanel() {
                   </div>
                 ) : (
                   <div className="text-center py-8 rounded-md bg-slate-50">
-                    <p className="text-slate-500">Henüz aktif pratik odası bulunmamaktadır.</p>
+                    <p className="text-slate-500">{t('noPracticeRooms')}</p>
                   </div>
                 )}
                 
@@ -258,7 +261,7 @@ export default function StudentPanel() {
                     className="text-slate-700 hover:text-slate-900 text-sm font-medium transition-colors"
                     onClick={() => setActiveTab('practice-rooms')}
                   >
-                    Tüm Pratik Odalarını Görüntüle →
+                    {t('viewAllPracticeRooms')} →
                   </button>
                 </div>
               </div>
@@ -566,13 +569,16 @@ export default function StudentPanel() {
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Mobil menü butonu */}
       <div className="bg-white p-4 flex justify-between items-center md:hidden border-b shadow-sm sticky top-0 z-50">
-        <h1 className="text-lg font-semibold text-slate-800">İngilizce Pratik</h1>
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-        >
-          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <h1 className="text-lg font-semibold text-slate-800">{t('appName')}</h1>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher variant="dropdown" />
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
       
       {/* Sol yan çubuğu - mobil için modal, desktop için sabit */}
@@ -588,7 +594,7 @@ export default function StudentPanel() {
               <div className="relative w-9 h-9 rounded-full overflow-hidden border border-slate-200">
                 <Image 
                   src={userProfile.photoURL} 
-                  alt={userProfile.displayName || 'Profil'} 
+                  alt={userProfile.displayName || t('profile')} 
                   className="object-cover"
                   fill
                 />
@@ -600,9 +606,9 @@ export default function StudentPanel() {
             )}
             <div>
               <div className="text-sm font-medium text-slate-800 truncate max-w-[150px]">
-                {userProfile?.displayName || userProfile?.firstName || 'Öğrenci'}
+                {userProfile?.displayName || userProfile?.firstName || t('student')}
               </div>
-              <div className="text-xs text-slate-500">{userProfile?.role || 'Öğrenci'}</div>
+              <div className="text-xs text-slate-500">{userProfile?.role || t('student')}</div>
             </div>
           </div>
           <button 
@@ -639,14 +645,17 @@ export default function StudentPanel() {
           </nav>
         </div>
         
-        {/* Çıkış butonu */}
+        {/* Dil değiştirici ve çıkış butonu */}
         <div className="p-3 border-t border-slate-200">
+          <div className="mb-3">
+            <LanguageSwitcher variant="select" className="w-full" />
+          </div>
           <button 
             onClick={handleLogout}
             className="w-full flex items-center justify-center px-3 py-2 rounded-md text-sm text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut size={16} className="mr-2 opacity-75" />
-            Çıkış Yap
+            {t('logout')}
           </button>
         </div>
       </div>
@@ -661,10 +670,11 @@ export default function StudentPanel() {
       
       {/* Ana içerik alanı */}
       <div className="flex-1 p-4 md:p-6 md:pt-6 overflow-auto">
-        <div className="hidden md:block mb-6">
+        <div className="hidden md:flex md:justify-between md:items-center mb-6">
           <h1 className="text-xl font-semibold text-slate-800">
-            {menuItems.find(item => item.id === activeTab)?.label || 'İngilizce Pratik'}
+            {menuItems.find(item => item.id === activeTab)?.label || t('appName')}
           </h1>
+          <LanguageSwitcher variant="dropdown" />
         </div>
         
         {renderContent()}
