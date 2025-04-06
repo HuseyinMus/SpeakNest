@@ -165,11 +165,11 @@ export default function StudentPanel() {
   // Menü öğeleri
   const menuItems = [
     { id: 'dashboard', label: 'Ana Sayfa', icon: <Home size={18} /> },
-    { id: 'courses', label: 'Kurslarım', icon: <Book size={18} /> },
+    { id: 'meetings', label: 'Toplantılarım', icon: <Calendar size={18} /> },
+    { id: 'classroom', label: 'Sınıfım', icon: <Book size={18} /> },
     { id: 'assignments', label: 'Ödevlerim', icon: <FileText size={18} /> },
     { id: 'profile', label: 'Profilim', icon: <User size={18} /> },
     { id: 'statistics', label: 'İstatistikler', icon: <BarChart size={18} /> },
-    { id: 'calendar', label: 'Takvim', icon: <Calendar size={18} /> },
     { id: 'settings', label: 'Ayarlar', icon: <Settings size={18} /> },
   ];
 
@@ -196,7 +196,7 @@ export default function StudentPanel() {
             {/* Aktif Kurslar */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
               <div className="bg-slate-700 px-6 py-3">
-                <h2 className="text-base font-medium text-white">Aktif Kurslarım</h2>
+                <h2 className="text-base font-medium text-white">Sınıfım</h2>
               </div>
               <div className="p-6">
                 {activeCourses.length > 0 ? (
@@ -213,7 +213,7 @@ export default function StudentPanel() {
                             className="text-sm px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 transition-colors"
                             onClick={() => router.push(`/courses/${course.id}`)}
                           >
-                            Kursa Git
+                            Sınıfa Gir
                           </button>
                         </div>
                       </div>
@@ -221,16 +221,16 @@ export default function StudentPanel() {
                   </div>
                 ) : (
                   <div className="text-center py-8 rounded-md bg-slate-50">
-                    <p className="text-slate-500">Henüz aktif kursunuz bulunmamaktadır.</p>
+                    <p className="text-slate-500">Henüz aktif sınıfınız bulunmamaktadır.</p>
                   </div>
                 )}
                 
                 <div className="mt-4 text-right">
                   <button 
                     className="text-slate-700 hover:text-slate-900 text-sm font-medium transition-colors"
-                    onClick={() => setActiveTab('courses')}
+                    onClick={() => setActiveTab('classroom')}
                   >
-                    Tüm Kursları Görüntüle →
+                    Tüm Sınıfları Görüntüle →
                   </button>
                 </div>
               </div>
@@ -251,7 +251,7 @@ export default function StudentPanel() {
                             <h3 className="text-lg font-medium text-slate-800">{assignment.title}</h3>
                             <p className="text-slate-600 text-sm mt-1">{assignment.description}</p>
                             <span className="text-sm text-slate-500 block mt-2">
-                              Kurs: {assignment.courseName || 'Belirtilmemiş'}
+                              Sınıf: {assignment.courseName || 'Belirtilmemiş'}
                             </span>
                           </div>
                           <div className="text-right">
@@ -293,11 +293,27 @@ export default function StudentPanel() {
             </div>
           </div>
         );
-      case 'courses':
+      case 'meetings':
         return (
           <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
             <div className="bg-slate-700 px-6 py-3">
-              <h2 className="text-base font-medium text-white">Tüm Kurslarım</h2>
+              <h2 className="text-base font-medium text-white">Toplantılarım</h2>
+            </div>
+            <div className="p-6">
+              <div className="text-center py-8 rounded-md bg-slate-50">
+                <p className="text-slate-500">Henüz planlanmış toplantınız bulunmamaktadır.</p>
+                <button className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition-colors text-sm">
+                  Toplantı Oluştur
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      case 'classroom':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-slate-700 px-6 py-3">
+              <h2 className="text-base font-medium text-white">Sınıfım</h2>
             </div>
             <div className="p-6">
               {activeCourses.length > 0 ? (
@@ -314,7 +330,7 @@ export default function StudentPanel() {
                           className="text-sm px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 transition-colors"
                           onClick={() => router.push(`/courses/${course.id}`)}
                         >
-                          Kursa Git
+                          Sınıfa Gir
                         </button>
                       </div>
                     </div>
@@ -322,7 +338,7 @@ export default function StudentPanel() {
                 </div>
               ) : (
                 <div className="text-center py-8 rounded-md bg-slate-50">
-                  <p className="text-slate-500">Henüz aktif kursunuz bulunmamaktadır.</p>
+                  <p className="text-slate-500">Henüz aktif sınıfınız bulunmamaktadır.</p>
                 </div>
               )}
             </div>
@@ -344,7 +360,7 @@ export default function StudentPanel() {
                           <h3 className="text-lg font-medium text-slate-800">{assignment.title}</h3>
                           <p className="text-slate-600 text-sm mt-1">{assignment.description}</p>
                           <span className="text-sm text-slate-500 block mt-2">
-                            Kurs: {assignment.courseName || 'Belirtilmemiş'}
+                            Sınıf: {assignment.courseName || 'Belirtilmemiş'}
                           </span>
                         </div>
                         <div className="text-right">
@@ -436,18 +452,15 @@ export default function StudentPanel() {
           </div>
         );
       case 'statistics':
-      case 'calendar':
       case 'settings':
         return (
           <div className="bg-white rounded-lg shadow-sm border border-slate-100 p-8 text-center">
             <div className="text-5xl mb-4 text-slate-300 flex justify-center">
               {activeTab === 'statistics' && <BarChart size={56} className="text-slate-400" />}
-              {activeTab === 'calendar' && <Calendar size={56} className="text-slate-400" />}
               {activeTab === 'settings' && <Settings size={56} className="text-slate-400" />}
             </div>
             <h2 className="text-xl font-semibold mb-2 text-slate-800">
               {activeTab === 'statistics' && 'İstatistikler'}
-              {activeTab === 'calendar' && 'Takvim'}
               {activeTab === 'settings' && 'Ayarlar'}
             </h2>
             <p className="text-slate-500">Bu özellik henüz geliştirme aşamasındadır.</p>
