@@ -24,6 +24,36 @@ export default function ProUserPanel() {
   const router = useRouter();
   const toast = useToast();
   
+  // Toplantı seviyesi için çevirileri manuel olarak yapan yardımcı fonksiyon
+  const getLevelTranslation = (level: string) => {
+    switch(level) {
+      case 'beginner': return t('beginnerLevel', 'Başlangıç Seviyesi');
+      case 'intermediate': return t('intermediateLevel', 'Orta Seviye');
+      case 'advanced': return t('advancedLevel', 'İleri Seviye');
+      case 'any': return t('anyLevel', 'Tüm Seviyeler');
+      default: return level;
+    }
+  };
+
+  // Toplantı konusu için çevirileri manuel olarak yapan yardımcı fonksiyon
+  const getTopicTranslation = (topic: string) => {
+    switch(topic) {
+      case 'daily': return t('dailyConversation', 'Günlük Konuşma');
+      case 'business': return t('business', 'İş Dünyası');
+      case 'education': return t('education', 'Eğitim/Okul');
+      case 'science': return t('science', 'Bilim');
+      case 'technology': return t('technology', 'Teknoloji');
+      case 'arts': return t('arts', 'Sanat ve Kültür');
+      case 'travel': return t('travel', 'Seyahat');
+      case 'food': return t('food', 'Yemek ve Mutfak');
+      case 'sports': return t('sports', 'Spor');
+      case 'health': return t('health', 'Sağlık ve Wellness');
+      case 'environment': return t('environment', 'Çevre');
+      case 'entertainment': return t('entertainment', 'Eğlence ve Hobiler');
+      default: return topic;
+    }
+  };
+  
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -75,11 +105,11 @@ export default function ProUserPanel() {
         // Aktif toplantıları getir
         await fetchMeetingData(userId);
       } else {
-        setError(t('userProfileNotFound'));
+        setError(t('userProfileNotFound', 'Kullanıcı profili bulunamadı.'));
       }
     } catch (err) {
       console.error('Profil verisi alınamadı:', err);
-      setError(t('profileDataError'));
+      setError(t('profileDataError', 'Profil verileri alınırken bir hata oluştu.'));
     }
   };
   
@@ -88,11 +118,7 @@ export default function ProUserPanel() {
     try {
       console.log('ProUser ID:', userId);
       
-      // Kullanıcı proUser olsa bile, boş data göster (meetings koleksiyonu hazır olmayabilir)
-      setActiveMeetings([]);
-      
-      // Aktif toplantıları getir - şu an devre dışı bırakıyoruz, meetings koleksiyonu hazır olmadığı için
-      /* 
+      // Aktif toplantıları getir
       const meetingsQuery = query(
         collection(db, 'meetings'),
         where('hostId', '==', userId),
@@ -111,16 +137,15 @@ export default function ProUserPanel() {
       });
       
       setActiveMeetings(meetingsData);
-      */
       
     } catch (err: any) {
       console.error('Toplantı verileri alınamadı:', err);
       // Hata mesajını daha kullanıcı dostu hale getir
       if (err.code === 'permission-denied') {
         console.log('Yetki hatası: Meetings koleksiyonuna erişim izni yok');
-        setError(t('meetingsAccessError'));
+        setError(t('meetingsAccessError', 'Toplantılara erişim izniniz yok.'));
       } else {
-        setError(t('meetingsDataError'));
+        setError(t('meetingsDataError', 'Toplantı verileri alınırken bir hata oluştu.'));
       }
     }
   };
@@ -183,7 +208,7 @@ export default function ProUserPanel() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col">
       {/* Mobil menü butonu */}
       <div className="bg-white p-4 flex justify-between items-center md:hidden border-b shadow-sm sticky top-0 z-50">
         <h1 className="text-lg font-semibold text-slate-800">{t('appName')}</h1>
@@ -202,7 +227,7 @@ export default function ProUserPanel() {
         <div className={`bg-white border-r shadow-sm fixed md:static inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out overflow-y-auto ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}>
-          <div className="p-4 border-b">
+          <div className="p-4 border-b bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
             <div className="flex items-center gap-3 pb-2">
               {userProfile?.photoURL ? (
                 <Image 
@@ -210,18 +235,18 @@ export default function ProUserPanel() {
                   alt={userProfile.displayName || t('profile')}
                   width={40}
                   height={40}
-                  className="rounded-full"
+                  className="rounded-full border-2 border-white/30"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-medium border-2 border-white/30">
                   {userProfile?.displayName?.charAt(0) || userProfile?.firstName?.charAt(0) || '?'}
                 </div>
               )}
               <div>
-                <div className="font-medium text-slate-800">
+                <div className="font-medium">
                   {userProfile?.displayName || `${userProfile?.firstName} ${userProfile?.lastName}` || t('conversationHost')}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-white/80">
                   {userProfile?.role === 'proUser' ? t('conversationHost') : userProfile?.role}
                 </div>
               </div>
@@ -234,10 +259,10 @@ export default function ProUserPanel() {
                 <li key={item.id}>
                   <button 
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-3 w-full py-2 px-3 rounded-md text-sm ${
+                    className={`flex items-center gap-3 w-full py-2.5 px-3 rounded-md text-sm transition-all duration-200 ${
                       activeTab === item.id 
-                        ? 'bg-blue-50 text-blue-600 font-medium' 
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-medium shadow-sm border border-blue-100' 
+                        : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     {item.icon}
@@ -248,7 +273,7 @@ export default function ProUserPanel() {
               <li>
                 <button 
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full py-2 px-3 rounded-md text-sm text-red-600 hover:bg-red-50"
+                  className="flex items-center gap-3 w-full py-2.5 px-3 rounded-md text-sm text-red-600 hover:bg-red-50 transition-all duration-200"
                 >
                   <LogOut size={18} />
                   {t('logout')}
@@ -266,7 +291,15 @@ export default function ProUserPanel() {
         {/* Ana içerik alanı */}
         <div className="flex-1 p-4 md:p-6 md:pt-6 overflow-auto">
           <div className="hidden md:flex md:justify-between md:items-center mb-6">
-            <h1 className="text-xl font-semibold text-slate-800">
+            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-3">
+              {activeTab === 'dashboard' && <Home size={20} className="text-blue-600" />}
+              {activeTab === 'my-meetings' && <Calendar size={20} className="text-blue-600" />}
+              {activeTab === 'create-meeting' && <MessageCircle size={20} className="text-blue-600" />}
+              {activeTab === 'participants' && <Users size={20} className="text-blue-600" />}
+              {activeTab === 'evaluations' && <CheckSquare size={20} className="text-blue-600" />}
+              {activeTab === 'profile' && <User size={20} className="text-blue-600" />}
+              {activeTab === 'statistics' && <BarChart size={20} className="text-blue-600" />}
+              {activeTab === 'settings' && <Settings size={20} className="text-blue-600" />}
               {menuItems.find(item => item.id === activeTab)?.label || t('appName')}
             </h1>
           </div>
@@ -284,99 +317,127 @@ export default function ProUserPanel() {
         return (
           <div className="space-y-6">
             {/* Hoş geldin kartı */}
-            <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-lg shadow-md p-6 border border-teal-400">
-              <h2 className="text-xl font-semibold text-white mb-2">{t('welcomeMessage', { name: userProfile?.displayName || userProfile?.firstName || t('conversationHost') })}</h2>
-              <p className="text-white opacity-90">{t('hostDayMessage')}</p>
-              <div className="mt-4 flex flex-wrap gap-3">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6 border border-blue-400/30">
+              <h2 className="text-2xl font-semibold text-white mb-2">
+                {t('welcomeMessage', 'Hoş geldiniz, {{name}}').replace('{{name}}', userProfile?.displayName || userProfile?.firstName || t('conversationHost', 'Konuşma Sunucusu'))}
+              </h2>
+              <p className="text-white/90 mb-6">{t('hostDayMessage', 'Konuşma sunucusu olarak bugün yeni bir toplantı oluşturabilir ve İngilizce pratik yapmak isteyen öğrencilere yardımcı olabilirsiniz.')}</p>
+              <div className="flex flex-wrap gap-3">
                 <button 
                   onClick={() => setActiveTab('create-meeting')}
-                  className="px-4 py-2 bg-white hover:bg-teal-50 text-teal-700 rounded-md transition-colors text-sm font-medium shadow-sm"
+                  className="px-5 py-2.5 bg-white hover:bg-blue-50 text-blue-700 rounded-lg transition-colors text-sm font-medium shadow-sm flex items-center gap-2"
                 >
-                  {t('createNewMeeting')}
+                  <Plus size={16} />
+                  {t('createNewMeeting', 'Yeni Toplantı Oluştur')}
                 </button>
                 <button 
                   onClick={() => setActiveTab('participants')}
-                  className="px-4 py-2 bg-teal-700 bg-opacity-30 hover:bg-opacity-40 text-white rounded-md transition-colors text-sm font-medium shadow-sm border border-teal-400"
+                  className="px-5 py-2.5 bg-blue-700/30 hover:bg-blue-700/40 text-white rounded-lg transition-colors text-sm font-medium shadow-sm border border-white/10 flex items-center gap-2"
                 >
-                  {t('viewParticipants')}
+                  <Users size={16} />
+                  {t('viewParticipants', 'Katılımcıları Görüntüle')}
                 </button>
               </div>
             </div>
             
             {/* Aktif Toplantılarım */}
-            <div className="bg-white rounded-lg shadow-md border border-teal-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-teal-600 to-emerald-500 px-6 py-3">
-                <h2 className="text-base font-medium text-white">{t('activeMeetings')}</h2>
+            <div className="bg-white rounded-xl shadow-md border border-slate-200/50 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-3.5 flex items-center justify-between">
+                <h2 className="text-base font-medium text-white flex items-center gap-2">
+                  <Calendar size={18} />
+                  {t('activeMeetings', 'Aktif Toplantılar')}
+                </h2>
+                <button 
+                  onClick={() => setActiveTab('create-meeting')}
+                  className="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Plus size={12} />
+                    {t('createNewMeeting', 'Yeni Toplantı Oluştur')}
+                  </span>
+                </button>
               </div>
               <div className="p-6">
                 {activeMeetings.length > 0 ? (
                   <div className="grid gap-4">
                     {activeMeetings.map((meeting) => (
-                      <div key={meeting.id} className="border border-slate-200 rounded-md p-4 hover:bg-slate-50 transition-colors">
-                        <h3 className="text-lg font-medium text-slate-800">{meeting.title}</h3>
-                        <p className="text-slate-600 text-sm mt-1">{meeting.description}</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-teal-100 text-teal-700 rounded text-xs">
-                            {meeting.level || t('intermediateLevel')}
-                          </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                            {meeting.topic || t('dailyConversation')}
-                          </span>
-                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                            {meeting.participants?.length || 0}/{meeting.capacity || 8} {t('participants')}
+                      <div key={meeting.id} className="border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-blue-200 transition-all duration-200 bg-white">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-lg font-medium text-slate-800">{meeting.title}</h3>
+                          <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                            {getLevelTranslation(meeting.level || 'intermediate')}
                           </span>
                         </div>
-                        <div className="mt-3 flex items-center justify-between">
-                          <span className="text-sm text-slate-500">
-                            {t('date')}: {meeting.startTime?.toDate().toLocaleDateString() || t('notSpecified')}, 
+                        <p className="text-slate-600 text-sm mt-2 mb-3">{meeting.description}</p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium flex items-center gap-1">
+                            <MessageCircle size={12} />
+                            {getTopicTranslation(meeting.topic || 'daily')}
+                          </span>
+                          <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium flex items-center gap-1">
+                            <Users size={12} />
+                            {meeting.participants?.length || 0}/{meeting.participantCount || meeting.capacity || 6} {t('participants', 'katılımcı')}
+                          </span>
+                          <span className="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium flex items-center gap-1">
+                            <Clock size={12} />
+                            {meeting.startTime?.toDate().toLocaleDateString() || t('notSpecified', 'Belirtilmemiş')}, 
                             {meeting.startTime?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ''}
                           </span>
+                        </div>
+                        <div className="flex justify-end">
                           <button 
-                            className="text-sm px-3 py-1.5 rounded-md bg-teal-700 text-white hover:bg-teal-800 transition-colors"
+                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors text-sm font-medium shadow-sm flex items-center gap-2"
                             onClick={() => router.push(`/meetings/${meeting.id}`)}
                           >
-                            {t('goToMeeting')}
+                            {t('goToMeeting', 'Toplantıya Git')} <Calendar size={16} />
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 rounded-md bg-slate-50">
-                    <p className="text-slate-600">{t('noActiveMeetings')}</p>
+                  <div className="text-center py-10 px-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                    <Calendar size={40} className="mx-auto text-slate-400 mb-3" />
+                    <p className="text-slate-600 mb-4">{t('noActiveMeetings', 'Aktif toplantınız bulunmuyor.')}</p>
                     <button 
-                      className="mt-4 px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-500 text-white rounded-md hover:from-teal-700 hover:to-emerald-600 transition-colors text-sm shadow-sm"
+                      className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors text-sm font-medium shadow-sm inline-flex items-center gap-2"
                       onClick={() => setActiveTab('create-meeting')}
                     >
-                      {t('createNewMeeting')}
+                      <Plus size={16} />
+                      {t('createNewMeeting', 'Yeni Toplantı Oluştur')}
                     </button>
                   </div>
                 )}
                 
-                <div className="mt-4 text-right">
+                <div className="mt-6 text-right">
                   <button 
-                    className="text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors"
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors inline-flex items-center gap-1"
                     onClick={() => setActiveTab('my-meetings')}
                   >
-                    {t('viewAllMeetings')} →
+                    {t('viewAllMeetings', 'Tüm Toplantıları Görüntüle')} <Calendar size={16} />
                   </button>
                 </div>
               </div>
             </div>
             
             {/* Yaklaşan Toplantılar */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
-              <div className="bg-slate-700 px-6 py-3">
-                <h2 className="text-base font-medium text-white">{t('upcomingMeetings')}</h2>
+            <div className="bg-white rounded-xl shadow-md border border-slate-200/50 overflow-hidden">
+              <div className="bg-gradient-to-r from-slate-700 to-slate-800 px-6 py-3.5 flex items-center justify-between">
+                <h2 className="text-base font-medium text-white flex items-center gap-2">
+                  <Clock size={18} />
+                  {t('upcomingMeetings', 'Yaklaşan Toplantılar')}
+                </h2>
               </div>
               <div className="p-6">
-                <div className="text-center py-8 rounded-md bg-slate-50">
-                  <p className="text-slate-600">{t('noUpcomingMeetingsScheduled')}</p>
+                <div className="text-center py-10 px-4 rounded-xl bg-slate-50/50 border border-slate-100">
+                  <Clock size={40} className="mx-auto text-slate-400 mb-3" />
+                  <p className="text-slate-600 mb-4">{t('noUpcomingMeetingsScheduled', 'Yaklaşan toplantı planlanmamış.')}</p>
                   <button 
-                    className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition-colors text-sm shadow-sm"
+                    className="px-5 py-2.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-700 hover:to-slate-800 transition-colors text-sm font-medium shadow-sm inline-flex items-center gap-2"
                     onClick={() => setActiveTab('create-meeting')}
                   >
-                    {t('scheduleMeeting')}
+                    <Plus size={16} />
+                    {t('scheduleMeeting', 'Toplantı Planla')}
                   </button>
                 </div>
               </div>
@@ -388,24 +449,84 @@ export default function ProUserPanel() {
         return <CreateMeetingForm userId={user?.uid} userProfile={userProfile} />;
       
       case 'my-meetings':
-        // Toplantılarım sekmesi için Shimmer efekti ile geçici içerik
         return (
           <div className="space-y-6">
-            <div className="bg-white p-6 shadow-md rounded-lg border-l-4 border-blue-500">
-              <h2 className="text-xl font-semibold text-slate-800">{t('myMeetings')}</h2>
-              <p className="text-slate-600 mt-1">{t('myMeetingsDescription', 'Oluşturduğunuz ve katıldığınız tüm toplantıları görüntüleyin.')}</p>
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-md p-6 text-white">
+              <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
+                <Calendar size={20} />
+                {t('myMeetings', 'Toplantılarım')}
+              </h2>
+              <p className="text-white/80">Oluşturduğunuz ve katıldığınız tüm toplantıları görüntüleyin.</p>
             </div>
             
-            <ShimmerList items={5} />
+            {activeMeetings.length > 0 ? (
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="grid gap-4">
+                  {activeMeetings.map((meeting) => (
+                    <div key={meeting.id} className="border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-blue-200 transition-all duration-200 bg-white">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-lg font-medium text-slate-800">{meeting.title}</h3>
+                        <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                          {getLevelTranslation(meeting.level || 'intermediate')}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 text-sm mt-2 mb-3">{meeting.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium flex items-center gap-1">
+                          <MessageCircle size={12} />
+                          {getTopicTranslation(meeting.topic || 'daily')}
+                        </span>
+                        <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium flex items-center gap-1">
+                          <Users size={12} />
+                          {meeting.participants?.length || 0}/{meeting.participantCount || 6} {t('participants', 'katılımcı')}
+                        </span>
+                        <span className="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium flex items-center gap-1">
+                          <Clock size={12} />
+                          {meeting.startTime?.toDate().toLocaleDateString() || t('notSpecified', 'Belirtilmemiş')}, 
+                          {meeting.startTime?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ''}
+                        </span>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors text-sm font-medium flex items-center gap-1"
+                          onClick={() => console.log('Edit meeting:', meeting.id)}
+                        >
+                          {t('edit', 'Düzenle')} <Settings size={14} />
+                        </button>
+                        <button 
+                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors text-sm font-medium shadow-sm flex items-center gap-1"
+                          onClick={() => router.push(`/meetings/${meeting.id}`)}
+                        >
+                          {t('goToMeeting', 'Toplantıya Git')} <Calendar size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-md p-8 text-center">
+                <Calendar size={60} className="mx-auto text-slate-300 mb-4" />
+                <p className="text-slate-600 mb-5 text-lg">{t('noMeetingsYet', 'Henüz toplantınız bulunmuyor.')}</p>
+                <button 
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors shadow-sm inline-flex items-center gap-2"
+                  onClick={() => setActiveTab('create-meeting')}
+                >
+                  <Plus size={18} />
+                  {t('createNewMeeting', 'Yeni Toplantı Oluştur')}
+                </button>
+              </div>
+            )}
           </div>
         );
       
-      // Diğer tab içerikleri buraya eklenecek
-      
       default:
         return (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden p-6 text-center">
-            <p className="text-slate-600">{t('sectionComingSoon')}</p>
+          <div className="bg-white rounded-xl shadow-md border border-slate-200/50 overflow-hidden p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <Settings size={30} className="text-slate-400" />
+            </div>
+            <p className="text-slate-600">{t('sectionComingSoon', 'Bu bölüm yakında kullanıma açılacak.')}</p>
           </div>
         );
     }
@@ -630,18 +751,21 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
   return (
     <div className="space-y-8">
       {/* Başlık */}
-      <div className="bg-white p-6 shadow-md rounded-lg border-l-4 border-emerald-500">
-        <h2 className="text-xl font-semibold text-slate-800">{t('createMeeting')}</h2>
-        <p className="text-slate-600 mt-1">{t('createMeetingDescription', 'Yeni bir İngilizce pratik toplantısı oluşturun ve konuşma sunucusu olarak katılımcılara yardımcı olun.')}</p>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-md p-6 text-white">
+        <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
+          <MessageCircle size={20} />
+          {t('createMeeting', 'Toplantı Oluştur')}
+        </h2>
+        <p className="text-white/80">{t('createMeetingDescription', 'Yeni bir İngilizce pratik toplantısı oluşturun ve konuşma sunucusu olarak katılımcılara yardımcı olun.')}</p>
       </div>
       
       {/* Form */}
-      <div className="bg-white p-6 shadow-md rounded-lg">
+      <div className="bg-white p-8 shadow-md rounded-xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Başlık ve Açıklama */}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-2">
                 {t('meetingTitle', 'Toplantı Başlığı')} *
               </label>
               <input
@@ -650,13 +774,13 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder={t('meetingTitlePlaceholder', 'Örn: Günlük Konuşma Pratiği')}
                 required
               />
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-2">
                 {t('meetingDescription', 'Toplantı Açıklaması')}
               </label>
               <textarea
@@ -665,7 +789,7 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder={t('meetingDescriptionPlaceholder', 'Bu toplantıda neler konuşulacak?')}
               />
             </div>
@@ -675,7 +799,7 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="date" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="date" className="block text-sm font-medium text-slate-700 mb-2">
                   {t('meetingDate', 'Toplantı Tarihi')} *
                 </label>
                 <input
@@ -684,13 +808,13 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                   min={new Date().toISOString().split('T')[0]} // Bugün ve sonrası için
                 />
               </div>
               <div>
-                <label htmlFor="time" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="time" className="block text-sm font-medium text-slate-700 mb-2">
                   {t('meetingTime', 'Toplantı Saati')} *
                 </label>
                 <input
@@ -699,14 +823,14 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                   name="time"
                   value={formData.time}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="level" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="level" className="block text-sm font-medium text-slate-700 mb-2">
                   {t('level', 'Seviye')}
                 </label>
                 <select
@@ -714,7 +838,7 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                   name="level"
                   value={formData.level}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   {levelOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -724,7 +848,7 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                 </select>
               </div>
               <div>
-                <label htmlFor="topic" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="topic" className="block text-sm font-medium text-slate-700 mb-2">
                   {t('topic', 'Konu')}
                 </label>
                 <select
@@ -732,7 +856,7 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                   name="topic"
                   value={formData.topic}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   {topicOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -744,11 +868,14 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
             </div>
           </div>
           
-          {/* Katılımcı Sayısı - Tek alana dönüştürüldü */}
+          {/* Katılımcı Sayısı */}
           <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="participantCount" className="block text-sm font-medium text-slate-700 mb-1">
-                {t('participantCount', 'Katılımcı Sayısı')}
+            <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+              <label htmlFor="participantCount" className="block text-sm font-medium text-slate-700 mb-3 flex items-center justify-between">
+                <span>{t('participantCount', 'Katılımcı Sayısı')}</span>
+                <span className="text-lg font-medium text-blue-700 px-3 py-1 bg-blue-100 rounded-full">
+                  {formData.participantCount}
+                </span>
               </label>
               <div className="flex items-center">
                 <input
@@ -759,34 +886,31 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                   onChange={handleChange}
                   min="3"
                   max="6"
-                  className="w-full mr-3 accent-emerald-500"
+                  className="w-full accent-blue-600"
                 />
-                <span className="text-lg font-medium text-slate-700 min-w-[30px] text-center">
-                  {formData.participantCount}
-                </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">{t('participantCountHelp', 'Toplantıya katılabilecek kişi sayısı (3-6 arası)')}</p>
+              <p className="text-xs text-slate-500 mt-2">{t('participantCountHelp', 'Toplantıya katılabilecek kişi sayısı (3-6 arası)')}</p>
             </div>
           </div>
           
           {/* Anahtar Kelimeler */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+          <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+            <label className="block text-sm font-medium text-slate-700 mb-3">
               {t('keywords', 'Anahtar Kelimeler')}
             </label>
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={currentKeyword}
                 onChange={(e) => setCurrentKeyword(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder={t('keywordPlaceholder', 'Yeni anahtar kelime ekle')}
               />
               <button
                 type="button"
                 onClick={addKeyword}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors shadow-sm flex items-center justify-center"
               >
                 <Plus size={18} />
               </button>
@@ -796,13 +920,13 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
                 {formData.keywords.map((keyword, index) => (
                   <div
                     key={index}
-                    className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full flex items-center gap-1.5 text-sm"
+                    className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full flex items-center gap-1.5 text-sm"
                   >
                     {keyword}
                     <button
                       type="button"
                       onClick={() => removeKeyword(keyword)}
-                      className="text-emerald-600 hover:text-emerald-800 focus:outline-none"
+                      className="text-blue-600 hover:text-blue-800 focus:outline-none"
                     >
                       <MinusCircle size={16} />
                     </button>
@@ -813,33 +937,33 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
           </div>
           
           {/* Konu Soruları */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+          <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+            <label className="block text-sm font-medium text-slate-700 mb-3">
               {t('topicQuestions', 'Konu Soruları')}
             </label>
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={currentQuestion}
                 onChange={(e) => setCurrentQuestion(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addQuestion())}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder={t('questionPlaceholder', 'Toplantıda sorulacak bir soru ekle')}
               />
               <button
                 type="button"
                 onClick={addQuestion}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors shadow-sm flex items-center justify-center"
               >
                 <Plus size={18} />
               </button>
             </div>
             {formData.questions.length > 0 && (
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2 mt-3">
                 {formData.questions.map((question, index) => (
                   <div
                     key={index}
-                    className="px-4 py-2 bg-slate-100 text-slate-800 rounded-md flex items-center justify-between text-sm"
+                    className="px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-lg flex items-center justify-between text-sm shadow-sm"
                   >
                     <span>{question}</span>
                     <button
@@ -857,25 +981,47 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
           
           {/* Hata/Başarı Mesajları */}
           {formData.error && (
-            <div className="px-4 py-3 bg-red-100 text-red-800 rounded-md">
+            <div className="px-4 py-3 bg-red-100 text-red-800 rounded-lg border border-red-200 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-circle">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" x2="12" y1="8" y2="12" />
+                <line x1="12" x2="12.01" y1="16" y2="16" />
+              </svg>
               {formData.error}
             </div>
           )}
           
           {formData.success && (
-            <div className="px-4 py-3 bg-green-100 text-green-800 rounded-md">
+            <div className="px-4 py-3 bg-green-100 text-green-800 rounded-lg border border-green-200 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check-circle">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
               {formData.success}
             </div>
           )}
           
           {/* Gönderme Butonu */}
-          <div className="pt-4 border-t border-slate-200">
+          <div className="pt-6 border-t border-slate-200 flex justify-end">
             <button
               type="submit"
               disabled={formData.isSubmitting}
-              className={`w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-md font-medium shadow-sm hover:from-teal-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${formData.isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-medium shadow-md hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 flex items-center gap-2 ${formData.isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {formData.isSubmitting ? t('creating', 'Oluşturuluyor...') : t('createMeeting', 'Toplantı Oluştur')}
+              {formData.isSubmitting ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {t('creating', 'Oluşturuluyor...')}
+                </>
+              ) : (
+                <>
+                  <Calendar size={18} />
+                  {t('createMeeting', 'Toplantı Oluştur')}
+                </>
+              )}
             </button>
           </div>
         </form>
