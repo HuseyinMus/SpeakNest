@@ -5,6 +5,7 @@ import { auth, db } from '@/lib/firebase/config';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import Image from 'next/image';
+import { Menu, X, Home, Book, FileText, User, LogOut } from 'lucide-react';
 
 export default function StudentPanel() {
   const [user, setUser] = useState<any>(null);
@@ -13,6 +14,8 @@ export default function StudentPanel() {
   const [activeCourses, setActiveCourses] = useState<any[]>([]);
   const [pendingAssignments, setPendingAssignments] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
   
   const router = useRouter();
   
@@ -54,6 +57,8 @@ export default function StudentPanel() {
         if (userData.role !== 'student') {
           if (userData.role === 'admin') {
             router.push('/dashboard');
+          } else if (userData.role === 'teacher') {
+            router.push('/teacher-panel');
           } else {
             router.push('/');
           }
@@ -74,7 +79,6 @@ export default function StudentPanel() {
   // Öğrenci verilerini getir (kurslar, ödevler)
   const fetchStudentData = async (userId: string) => {
     try {
-      // Örnek veri - gerçek uygulamada Firestore'dan çekilecek
       // Aktif kursları getir
       const coursesQuery = query(
         collection(db, 'courses'),
@@ -120,6 +124,15 @@ export default function StudentPanel() {
       setError('Kurs ve ödev bilgileri alınırken bir hata oluştu.');
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Çıkış yapılırken hata:', error);
+    }
+  };
   
   if (loading) {
     return (
@@ -146,73 +159,20 @@ export default function StudentPanel() {
     );
   }
   
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900">Öğrenci Paneli</h1>
-        <p className="mt-2 text-gray-600">Hoş geldin, {userProfile?.displayName || userProfile?.firstName || 'Öğrenci'}</p>
-        
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Sol Panel - Profil Bilgileri */}
-          <div className="lg:col-span-1">
-            <div className="bg-white shadow rounded-lg p-6">
-              <div className="flex flex-col items-center">
-                <div className="relative w-24 h-24 rounded-full overflow-hidden mb-4">
-                  {userProfile?.photoURL ? (
-                    <Image 
-                      src={userProfile.photoURL} 
-                      alt={userProfile.displayName || 'Profil Fotoğrafı'} 
-                      className="object-cover"
-                      fill
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500 text-2xl font-bold">
-                      {(userProfile?.displayName?.charAt(0) || userProfile?.firstName?.charAt(0) || 'S').toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <h2 className="text-xl font-semibold">{userProfile?.displayName || `${userProfile?.firstName} ${userProfile?.lastName}` || 'Öğrenci'}</h2>
-                <p className="text-gray-500">{userProfile?.email}</p>
-                <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                  {userProfile?.role}
-                </div>
-                
-                <div className="mt-6 w-full">
-                  <h3 className="text-lg font-medium mb-3">Profil Bilgileri</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Kayıt Tarihi:</span>
-                      <span className="font-medium">
-                        {userProfile?.createdAt ? new Date(userProfile.createdAt.seconds * 1000).toLocaleDateString('tr-TR') : 'Belirtilmemiş'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Son Giriş:</span>
-                      <span className="font-medium">
-                        {auth.currentUser?.metadata?.lastSignInTime ? new Date(auth.currentUser.metadata.lastSignInTime).toLocaleDateString('tr-TR') : 'Belirtilmemiş'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Öğrenci No:</span>
-                      <span className="font-medium">{userProfile?.studentId || 'Belirtilmemiş'}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6">
-                    <button 
-                      className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors"
-                      onClick={() => router.push('/profile')}
-                    >
-                      Profili Düzenle
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Sağ Panel - Kurslar ve Ödevler */}
-          <div className="lg:col-span-2 space-y-6">
+  // Menü öğeleri
+  const menuItems = [
+    { id: 'dashboard', label: 'Ana Sayfa', icon: <Home size={20} /> },
+    { id: 'courses', label: 'Kurslarım', icon: <Book size={20} /> },
+    { id: 'assignments', label: 'Ödevlerim', icon: <FileText size={20} /> },
+    { id: 'profile', label: 'Profilim', icon: <User size={20} /> },
+  ];
+
+  // Ana içerik renderlaması
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6">
             {/* Aktif Kurslar */}
             <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Aktif Kurslarım</h2>
@@ -246,7 +206,7 @@ export default function StudentPanel() {
               <div className="mt-4 text-right">
                 <button 
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  onClick={() => router.push('/courses')}
+                  onClick={() => setActiveTab('courses')}
                 >
                   Tüm Kursları Görüntüle →
                 </button>
@@ -299,14 +259,251 @@ export default function StudentPanel() {
               <div className="mt-4 text-right">
                 <button 
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  onClick={() => router.push('/assignments')}
+                  onClick={() => setActiveTab('assignments')}
                 >
                   Tüm Ödevleri Görüntüle →
                 </button>
               </div>
             </div>
           </div>
+        );
+      case 'courses':
+        return (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Tüm Kurslarım</h2>
+            {activeCourses.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeCourses.map((course) => (
+                  <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <h3 className="text-lg font-medium text-blue-600">{course.title}</h3>
+                    <p className="text-gray-600 text-sm mt-1">{course.description}</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-sm text-gray-500">
+                        Eğitmen: {course.instructorName || 'Belirtilmemiş'}
+                      </span>
+                      <button 
+                        className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-100"
+                        onClick={() => router.push(`/courses/${course.id}`)}
+                      >
+                        Kursa Git
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>Henüz aktif kursunuz bulunmamaktadır.</p>
+              </div>
+            )}
+          </div>
+        );
+      case 'assignments':
+        return (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Tüm Ödevlerim</h2>
+            {pendingAssignments.length > 0 ? (
+              <div className="space-y-4">
+                {pendingAssignments.map((assignment) => (
+                  <div key={assignment.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium">{assignment.title}</h3>
+                        <p className="text-gray-600 text-sm mt-1">{assignment.description}</p>
+                        <span className="text-sm text-gray-500 block mt-2">
+                          Kurs: {assignment.courseName || 'Belirtilmemiş'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${
+                          new Date(assignment.dueDate.seconds * 1000) < new Date() 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          Teslim Tarihi: {new Date(assignment.dueDate.seconds * 1000).toLocaleDateString('tr-TR')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <button 
+                        className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded-md hover:bg-green-100"
+                        onClick={() => router.push(`/assignments/${assignment.id}`)}
+                      >
+                        Ödevi Görüntüle
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>Bekleyen ödeviniz bulunmamaktadır.</p>
+              </div>
+            )}
+          </div>
+        );
+      case 'profile':
+        return (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Profil Bilgilerim</h2>
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative w-24 h-24 rounded-full overflow-hidden mb-4">
+                {userProfile?.photoURL ? (
+                  <Image 
+                    src={userProfile.photoURL} 
+                    alt={userProfile.displayName || 'Profil Fotoğrafı'} 
+                    className="object-cover"
+                    fill
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500 text-2xl font-bold">
+                    {(userProfile?.displayName?.charAt(0) || userProfile?.firstName?.charAt(0) || 'S').toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <h2 className="text-xl font-semibold">{userProfile?.displayName || `${userProfile?.firstName} ${userProfile?.lastName}` || 'Öğrenci'}</h2>
+              <p className="text-gray-500">{userProfile?.email}</p>
+              <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {userProfile?.role}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Kayıt Tarihi:</span>
+                <span className="font-medium">
+                  {userProfile?.createdAt ? new Date(userProfile.createdAt.seconds * 1000).toLocaleDateString('tr-TR') : 'Belirtilmemiş'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Son Giriş:</span>
+                <span className="font-medium">
+                  {auth.currentUser?.metadata?.lastSignInTime ? new Date(auth.currentUser.metadata.lastSignInTime).toLocaleDateString('tr-TR') : 'Belirtilmemiş'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Öğrenci No:</span>
+                <span className="font-medium">{userProfile?.studentId || 'Belirtilmemiş'}</span>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <button 
+                className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition-colors"
+                onClick={() => router.push('/profile')}
+              >
+                Profili Düzenle
+              </button>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* Mobil menü butonu */}
+      <div className="bg-white p-4 flex justify-between items-center md:hidden border-b">
+        <h1 className="text-xl font-bold text-gray-900">Öğrenci Paneli</h1>
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100"
+        >
+          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+      
+      {/* Sol yan çubuğu - mobil için modal, desktop için sabit */}
+      <div className={`
+        fixed inset-0 z-40 md:relative md:inset-auto
+        transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:translate-x-0 transition-transform duration-300 ease-in-out
+        flex flex-col w-64 bg-white border-r
+      `}>
+        <div className="p-4 border-b flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {userProfile?.photoURL ? (
+              <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                <Image 
+                  src={userProfile.photoURL} 
+                  alt={userProfile.displayName || 'Profil'} 
+                  className="object-cover"
+                  fill
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 font-bold">
+                {(userProfile?.displayName?.charAt(0) || userProfile?.firstName?.charAt(0) || 'S').toUpperCase()}
+              </div>
+            )}
+            <div className="text-sm font-medium truncate max-w-[150px]">
+              {userProfile?.displayName || userProfile?.firstName || 'Öğrenci'}
+            </div>
+          </div>
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 md:hidden"
+          >
+            <X size={20} />
+          </button>
         </div>
+        
+        {/* Menü öğeleri */}
+        <div className="flex-1 overflow-y-auto p-2">
+          <nav className="space-y-1">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
+                className={`
+                  w-full flex items-center px-4 py-3 text-left rounded-md
+                  ${activeTab === item.id 
+                    ? 'bg-blue-50 text-blue-600' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                  }
+                `}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+        
+        {/* Çıkış butonu */}
+        <div className="p-4 border-t">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center px-4 py-3 text-left rounded-md text-red-600 hover:bg-red-50"
+          >
+            <LogOut size={20} className="mr-3" />
+            Çıkış Yap
+          </button>
+        </div>
+      </div>
+      
+      {/* Yarı saydam overlay (sadece mobil için) */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Ana içerik alanı */}
+      <div className="flex-1 p-4 md:p-6 md:pt-6">
+        <div className="hidden md:block mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {menuItems.find(item => item.id === activeTab)?.label || 'Öğrenci Paneli'}
+          </h1>
+        </div>
+        
+        {renderContent()}
       </div>
     </div>
   );
