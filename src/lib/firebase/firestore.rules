@@ -2,121 +2,177 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Kullanıcı doğrulama kontrolü
+    // Helper fonksiyonları
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Kullanıcı kendi belgesine erişebilir
-    function isUser(userId) {
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isTeacher() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    function isEditor() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'editor';
+    }
+    
+    function isProUser() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'proUser';
+    }
+    
+    function isSameUser(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Admin rolü kontrolü
-    function isAdmin() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    
-    // Öğretmen rolü kontrolü
-    function isTeacher() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
-    }
-    
-    // Öğrenci rolü kontrolü
-    function isStudent() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
-    }
-    
-    // Editor rolü kontrolü
-    function isEditor() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'editor';
-    }
-    
-    // Pro User rolü kontrolü
-    function isProUser() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'proUser';
-    }
-    
-    // Kullanıcılar koleksiyonu kuralları
+    // Kullanıcı koleksiyonu
     match /users/{userId} {
-      // Kullanıcı kendi belgesini okuyabilir, admin ve öğretmen farklı kullanıcıları okuyabilir
-      allow read: if isUser(userId) || isAdmin() || (isTeacher() && (resource.data.role == 'student'));
-      
-      // Yeni kullanıcı oluşturulabilir (kayıt için)
-      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
-      
-      // Kullanıcı kendi belgesini güncelleyebilir, admin tüm belgeleri güncelleyebilir
-      allow update: if isUser(userId) || isAdmin();
-      
-      // Silme işlemi sadece admin tarafından yapılabilir
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        isAdmin() || 
+        isTeacher() || 
+        isProUser()
+      );
+      allow update: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        isAdmin()
+      );
       allow delete: if isAdmin();
     }
     
-    // Kurslar koleksiyonu kuralları
+    // Kurslar koleksiyonu
     match /courses/{courseId} {
-      // Kurs okuma kuralları - tüm kayıtlı kullanıcılar okuyabilir
       allow read: if isAuthenticated();
-      
-      // Kurs oluşturma ve güncelleme kuralları - öğretmen kendi kurslarını yönetebilir
-      allow create: if isAdmin() || isTeacher();
-      allow update: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
-      
-      // Kurs silme kuralları - öğretmen kendi kurslarını silebilir
-      allow delete: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
+      allow create: if isAuthenticated() && (
+        isAdmin() || 
+        isTeacher() || 
+        isProUser()
+      );
+      allow update, delete: if isAuthenticated() && (
+        isAdmin() || 
+        (isTeacher() && resource.data.instructorId == request.auth.uid) ||
+        (isProUser() && resource.data.instructorId == request.auth.uid)
+      );
     }
     
-    // Ödevler koleksiyonu kuralları
+    // Ödevler koleksiyonu
     match /assignments/{assignmentId} {
-      // Ödev okuma kuralları - öğrenci kendi ödevlerini görebilir, öğretmen kendi kursu ile ilgili ödevleri görebilir
       allow read: if isAuthenticated() && (
-                   isAdmin() || 
-                   (isTeacher() && resource.data.teacherId == request.auth.uid) || 
-                   (isStudent() && resource.data.studentId == request.auth.uid)
-                  );
-      
-      // Ödev oluşturma kuralları - öğretmen kendi kursu için ödev oluşturabilir
-      allow create: if isAdmin() || (isTeacher() && request.resource.data.teacherId == request.auth.uid);
-      
-      // Ödev güncelleme kuralları - öğretmen kendi ödevlerini, öğrenci kendi ödevlerinin durumunu güncelleyebilir
-      allow update: if isAdmin() || 
-                    (isTeacher() && resource.data.teacherId == request.auth.uid) || 
-                    (isStudent() && resource.data.studentId == request.auth.uid && 
-                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'submissionDate', 'content']));
-      
-      // Ödev silme kuralları - sadece öğretmen kendi ödevlerini silebilir
-      allow delete: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
+        isAdmin() || 
+        (isTeacher() && resource.data.teacherId == request.auth.uid) ||
+        (isProUser() && resource.data.hostId == request.auth.uid) ||
+        (resource.data.studentId == request.auth.uid)
+      );
+      allow create: if isAuthenticated() && (
+        isAdmin() || 
+        isTeacher() || 
+        isProUser()
+      );
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (isTeacher() && resource.data.teacherId == request.auth.uid) ||
+        (isProUser() && resource.data.hostId == request.auth.uid) ||
+        (resource.data.studentId == request.auth.uid && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentResponse', 'status', 'updatedAt']))
+      );
+      allow delete: if isAuthenticated() && (
+        isAdmin() || 
+        (isTeacher() && resource.data.teacherId == request.auth.uid) ||
+        (isProUser() && resource.data.hostId == request.auth.uid)
+      );
     }
     
-    // İçerik koleksiyonu kuralları
+    // İçerik koleksiyonu
     match /content/{contentId} {
-      // İçerik okuma kuralları
       allow read: if isAuthenticated();
-      
-      // İçerik oluşturma ve güncelleme kuralları - öğretmen kendi kursu ile ilgili içerik oluşturabilir
-      allow create: if isAdmin() || isEditor() || isTeacher();
-      allow update: if isAdmin() || isEditor() || (isTeacher() && resource.data.teacherId == request.auth.uid);
-      
-      // İçerik silme kuralları
-      allow delete: if isAdmin() || isEditor() || (isTeacher() && resource.data.teacherId == request.auth.uid);
+      allow create: if isAuthenticated() && (
+        isAdmin() || 
+        isTeacher() || 
+        isEditor() || 
+        isProUser()
+      );
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        isEditor() ||
+        (isTeacher() && resource.data.authorId == request.auth.uid) ||
+        (isProUser() && resource.data.authorId == request.auth.uid)
+      );
+      allow delete: if isAuthenticated() && (
+        isAdmin() || 
+        (isTeacher() && resource.data.authorId == request.auth.uid) ||
+        (isProUser() && resource.data.authorId == request.auth.uid) ||
+        isEditor()
+      );
     }
     
-    // Notlar koleksiyonu kuralları
+    // Notlar koleksiyonu
     match /grades/{gradeId} {
-      // Not okuma kuralları - öğrenci kendi notlarını, öğretmen kendi verdiği notları görebilir
       allow read: if isAuthenticated() && (
-                   isAdmin() || 
-                   (isTeacher() && resource.data.teacherId == request.auth.uid) || 
-                   (isStudent() && resource.data.studentId == request.auth.uid)
-                  );
-      
-      // Not oluşturma kuralları - sadece öğretmen not oluşturabilir
-      allow create: if isAdmin() || (isTeacher() && request.resource.data.teacherId == request.auth.uid);
-      
-      // Not güncelleme kuralları - sadece öğretmen kendi verdiği notları güncelleyebilir
-      allow update: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
-      
-      // Not silme kuralları - sadece öğretmen kendi verdiği notları silebilir
-      allow delete: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
+        isAdmin() || 
+        (isTeacher() && resource.data.teacherId == request.auth.uid) ||
+        (isProUser() && resource.data.hostId == request.auth.uid) ||
+        (resource.data.studentId == request.auth.uid)
+      );
+      allow create, update, delete: if isAuthenticated() && (
+        isAdmin() || 
+        (isTeacher() && request.resource.data.teacherId == request.auth.uid) ||
+        (isProUser() && request.resource.data.hostId == request.auth.uid)
+      );
+    }
+    
+    // Toplantılar koleksiyonu
+    match /meetings/{meetingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        isAdmin() || 
+        isProUser()
+      );
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (isProUser() && resource.data.hostId == request.auth.uid) ||
+        (
+          // Öğrenciler sadece kayıt olma/ayrılma için güncelleme yapabilir
+          isStudent() && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updatedAt'])
+        )
+      );
+      allow delete: if isAuthenticated() && (
+        isAdmin() || 
+        (isProUser() && resource.data.hostId == request.auth.uid)
+      );
+    }
+    
+    // Değerlendirmeler koleksiyonu 
+    match /evaluations/{evaluationId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        (isProUser() && resource.data.hostId == request.auth.uid) ||
+        (resource.data.studentId == request.auth.uid)
+      );
+      allow create: if isAuthenticated() && (
+        isAdmin() || 
+        isProUser() ||
+        isStudent()
+      );
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (isProUser() && (resource.data.hostId == request.auth.uid)) ||
+        (isStudent() && (resource.data.studentId == request.auth.uid) && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentFeedback', 'rating', 'updatedAt']))
+      );
+      allow delete: if isAuthenticated() && isAdmin();
     }
   }
 } 

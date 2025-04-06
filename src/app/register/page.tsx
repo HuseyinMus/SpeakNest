@@ -8,7 +8,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { signInWithGoogle } from '@/lib/firebase/auth';
 
-export default function RegisterPage() {
+const Register = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -47,19 +47,20 @@ export default function RegisterPage() {
           router.push('/dashboard');
         } else if (userData.role === 'teacher') {
           router.push('/teacher-panel');
-        } else if (userData.role === 'student') {
-          router.push('/student-panel');
+        } else if (userData.role === 'proUser') {
+          router.push('/prouser-panel');
         } else {
-          router.push('/');
+          // Varsayılan olarak öğrenci paneline yönlendir
+          router.push('/student-panel');
         }
       } else {
-        // Kullanıcı Firestore'da yoksa ana sayfaya yönlendir
-        router.push('/');
+        // Kullanıcı verisi yoksa öğrenci olarak kabul et
+        router.push('/student-panel');
       }
-    } catch (err) {
-      console.error('Kullanıcı bilgileri alınamadı:', err);
-      // Hata durumunda ana sayfaya yönlendir
-      router.push('/');
+    } catch (error) {
+      console.error('Rol kontrolü sırasında hata:', error);
+      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      setLoading(false);
     }
   };
   
@@ -291,4 +292,6 @@ export default function RegisterPage() {
       </div>
     </div>
   );
-} 
+}
+
+export default Register; 

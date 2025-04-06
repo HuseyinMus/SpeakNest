@@ -52,18 +52,57 @@ export default function Home() {
     }
   };
   
-  const navigateToUserPanel = () => {
-    if (!userProfile) return;
-    
+  const navigateToUserPanel = (userProfile) => {
     if (userProfile.role === 'admin') {
       router.push('/dashboard');
     } else if (userProfile.role === 'teacher') {
       router.push('/teacher-panel');
-    } else if (userProfile.role === 'student') {
-      router.push('/student-panel');
+    } else if (userProfile.role === 'proUser') {
+      router.push('/prouser-panel');
     } else {
-      // Diğer roller için varsayılan yönlendirme
-      router.push('/dashboard');
+      router.push('/student-panel');
+    }
+  };
+  
+  const renderProfileButton = () => {
+    if (userProfile) {
+      let buttonText = "";
+      
+      if (userProfile.role === 'admin') {
+        buttonText = "Admin Paneli";
+      } else if (userProfile.role === 'teacher') {
+        buttonText = "Öğretmen Paneli";
+      } else if (userProfile.role === 'proUser') {
+        buttonText = "Konuşma Sunucusu Paneli";
+      } else {
+        buttonText = "Öğrenci Paneli";
+      }
+      
+      return (
+        <button 
+          onClick={() => navigateToUserPanel(userProfile)} 
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 transition-colors"
+        >
+          {buttonText}
+        </button>
+      );
+    } else {
+      return (
+        <>
+          <button 
+            onClick={() => router.push('/login')} 
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 transition-colors"
+          >
+            Giriş Yap
+          </button>
+          <button 
+            onClick={() => router.push('/register')} 
+            className="bg-white hover:bg-gray-100 text-blue-700 border border-blue-700 rounded-md px-4 py-2 transition-colors ml-3"
+          >
+            Kayıt Ol
+          </button>
+        </>
+      );
     }
   };
   
@@ -87,14 +126,7 @@ export default function Home() {
                   <span className="text-sm">
                     Merhaba, {userProfile?.displayName || userProfile?.firstName || user.displayName || 'Kullanıcı'}
                   </span>
-                  <button
-                    onClick={navigateToUserPanel}
-                    className="px-4 py-2 bg-white text-blue-700 rounded hover:bg-blue-50 transition-colors"
-                  >
-                    {userProfile?.role === 'admin' ? 'Yönetim Paneli' : 
-                     userProfile?.role === 'teacher' ? 'Öğretmen Paneli' : 
-                     userProfile?.role === 'student' ? 'Öğrenci Paneli' : 'Hesabım'}
-                  </button>
+                  {renderProfileButton()}
                   <button
                     onClick={handleLogout}
                     className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600 transition-colors"
@@ -104,12 +136,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="space-x-4">
-                  <Link href="/login" className="px-4 py-2 bg-white text-blue-700 rounded hover:bg-blue-50 transition-colors">
-                    Giriş Yap
-                  </Link>
-                  <Link href="/register" className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600 transition-colors">
-                    Kayıt Ol
-                  </Link>
+                  {renderProfileButton()}
                 </div>
               )}
             </div>
@@ -130,7 +157,7 @@ export default function Home() {
             
             {user ? (
               <button
-                onClick={navigateToUserPanel}
+                onClick={() => navigateToUserPanel(userProfile)}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors text-lg"
               >
                 Derslerime Git
@@ -256,7 +283,7 @@ export default function Home() {
           
           {user ? (
             <button
-              onClick={navigateToUserPanel}
+              onClick={() => navigateToUserPanel(userProfile)}
               className="px-8 py-4 bg-white text-blue-700 rounded-lg shadow hover:bg-blue-50 transition-colors text-lg font-medium"
             >
               Derslerime Git
