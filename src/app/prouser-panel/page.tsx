@@ -374,9 +374,25 @@ export default function ProUserPanel() {
                       <div key={meeting.id} className="border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-blue-200 transition-all duration-200 bg-white">
                         <div className="flex justify-between items-start">
                           <h3 className="text-lg font-medium text-slate-800">{meeting.title}</h3>
-                          <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                            {getLevelTranslation(meeting.level || 'intermediate')}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {/* Toplantı durumu */}
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                              meeting.status === 'active' ? 'bg-green-100 text-green-700' : 
+                              meeting.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                              meeting.status === 'completed' ? 'bg-gray-100 text-gray-700' : 
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {meeting.status === 'active' && t('activeStatus', 'Aktif')}
+                              {meeting.status === 'scheduled' && t('scheduledStatus', 'Zamanlanmış')}
+                              {meeting.status === 'completed' && t('completedStatus', 'Tamamlandı')}
+                              {meeting.status === 'cancelled' && t('cancelledStatus', 'İptal Edildi')}
+                            </span>
+                            
+                            {/* Seviye */}
+                            <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                              {getLevelTranslation(meeting.level || 'intermediate')}
+                            </span>
+                          </div>
                         </div>
                         <p className="text-slate-600 text-sm mt-2 mb-3">{meeting.description}</p>
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -386,7 +402,7 @@ export default function ProUserPanel() {
                           </span>
                           <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium flex items-center gap-1">
                             <Users size={12} />
-                            {meeting.participants?.length || 0}/{meeting.participantCount || meeting.capacity || 6} {t('participants', 'katılımcı')}
+                            {meeting.participants?.length || 0}/{meeting.participantCount || 6} {t('participants', 'katılımcı')}
                           </span>
                           <span className="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium flex items-center gap-1">
                             <Clock size={12} />
@@ -394,13 +410,56 @@ export default function ProUserPanel() {
                             {meeting.startTime?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ''}
                           </span>
                         </div>
-                        <div className="flex justify-end">
+                        
+                        {/* Google Meet Bağlantısı */}
+                        {meeting.meetUrl && (
+                          <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-slate-600 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4z" fill="#ea4335" stroke="none" />
+                                  <rect x="3" y="6" width="12" height="12" rx="2" ry="2" fill="#34a853" fillOpacity="0.8" stroke="none" />
+                                </svg>
+                                {t('meetUrl', 'Toplantı Bağlantısı')}:
+                              </span>
+                              <div className="flex gap-2">
+                                <button 
+                                  className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded-md transition-colors"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(meeting.meetUrl);
+                                    toast.success(t('meetingLinkCopied', 'Toplantı bağlantısı panoya kopyalandı'));
+                                  }}
+                                >
+                                  {t('copyMeetingLink', 'Kopyala')}
+                                </button>
+                                <a 
+                                  href={meeting.meetUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md transition-colors flex items-center gap-1"
+                                >
+                                  {t('joinMeeting', 'Katıl')}
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-end gap-2">
                           <button 
-                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors text-sm font-medium shadow-sm flex items-center gap-2"
-                            onClick={() => router.push(`/meetings/${meeting.id}`)}
+                            className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors text-sm font-medium flex items-center gap-1"
+                            onClick={() => console.log('Edit meeting:', meeting.id)}
                           >
-                            {t('goToMeeting', 'Toplantıya Git')} <Calendar size={16} />
+                            {t('edit', 'Düzenle')} <Settings size={14} />
                           </button>
+                          {meeting.status === 'active' && (
+                            <button 
+                              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors text-sm font-medium shadow-sm flex items-center gap-1"
+                              onClick={() => router.push(`/meetings/${meeting.id}`)}
+                            >
+                              {t('goToMeeting', 'Toplantıya Git')} <Calendar size={14} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -456,7 +515,11 @@ export default function ProUserPanel() {
         );
       
       case 'create-meeting':
-        return <CreateMeetingForm userId={user?.uid} userProfile={userProfile} />;
+        return <CreateMeetingForm 
+          userId={user?.uid} 
+          userProfile={userProfile} 
+          setActiveTab={setActiveTab} 
+        />;
       
       case 'my-meetings':
         return (
@@ -476,9 +539,25 @@ export default function ProUserPanel() {
                     <div key={meeting.id} className="border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-blue-200 transition-all duration-200 bg-white">
                       <div className="flex justify-between items-start">
                         <h3 className="text-lg font-medium text-slate-800">{meeting.title}</h3>
-                        <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                          {getLevelTranslation(meeting.level || 'intermediate')}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {/* Toplantı durumu */}
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                            meeting.status === 'active' ? 'bg-green-100 text-green-700' : 
+                            meeting.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                            meeting.status === 'completed' ? 'bg-gray-100 text-gray-700' : 
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {meeting.status === 'active' && t('activeStatus', 'Aktif')}
+                            {meeting.status === 'scheduled' && t('scheduledStatus', 'Zamanlanmış')}
+                            {meeting.status === 'completed' && t('completedStatus', 'Tamamlandı')}
+                            {meeting.status === 'cancelled' && t('cancelledStatus', 'İptal Edildi')}
+                          </span>
+                          
+                          {/* Seviye */}
+                          <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                            {getLevelTranslation(meeting.level || 'intermediate')}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-slate-600 text-sm mt-2 mb-3">{meeting.description}</p>
                       <div className="flex flex-wrap gap-2 mb-4">
@@ -503,12 +582,14 @@ export default function ProUserPanel() {
                         >
                           {t('edit', 'Düzenle')} <Settings size={14} />
                         </button>
-                        <button 
-                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors text-sm font-medium shadow-sm flex items-center gap-1"
-                          onClick={() => router.push(`/meetings/${meeting.id}`)}
-                        >
-                          {t('goToMeeting', 'Toplantıya Git')} <Calendar size={14} />
-                        </button>
+                        {meeting.status === 'active' && (
+                          <button 
+                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors text-sm font-medium shadow-sm flex items-center gap-1"
+                            onClick={() => router.push(`/meetings/${meeting.id}`)}
+                          >
+                            {t('goToMeeting', 'Toplantıya Git')} <Calendar size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -562,10 +643,11 @@ interface MeetingFormData {
 interface CreateMeetingFormProps {
   userId: string | undefined;
   userProfile: any;
+  setActiveTab: (tab: string) => void;
 }
 
 // Toplantı Oluşturma Formu Bileşeni
-function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
+function CreateMeetingForm({ userId, userProfile, setActiveTab }: CreateMeetingFormProps) {
   const { t } = useLanguage();
   const toast = useToast();
   const router = useRouter();
@@ -675,7 +757,11 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
         throw new Error(errorMsg);
       }
       
-      // Firestore'a toplantı bilgilerini ekle
+      // MeetingService'i import et
+      // Normalde bu import üstte olmalı, ancak dosyayı tamamen değiştirmemek için burada tutuyoruz
+      const { MeetingService } = await import('@/lib/services/MeetingService');
+      
+      // Toplantı verilerini hazırla
       const meetingData = {
         title: formData.title,
         description: formData.description,
@@ -685,18 +771,14 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
         participantCount: formData.participantCount,
         keywords: formData.keywords,
         questions: formData.questions,
-        hostId: userId,
+        hostId: userId || '',
         hostName: userProfile?.displayName || `${userProfile?.firstName} ${userProfile?.lastName}`,
         hostPhotoURL: userProfile?.photoURL || null,
-        status: 'active',
-        participants: [],
-        meetUrl: '', // Google Meet API ile daha sonra eklenecek
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        participants: [] // Zorunlu alan
       };
       
-      // Meetings koleksiyonuna ekle
-      const docRef = await addDoc(collection(db, 'meetings'), meetingData);
+      // Toplantıyı oluştur
+      const meetingId = await MeetingService.createMeeting(meetingData);
       
       // Başarılı mesajı göster
       const successMsg = t('meetingCreateSuccess', 'Toplantı başarıyla oluşturuldu!');
@@ -717,12 +799,17 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
         success: successMsg
       });
       
+      // Aktif toplantıları yeniden yükle - ProUserPanel bileşenindeki fetchMeetingData'ya erişemiyoruz
+      // ProUserPanel bileşeninde bir callback ile bu sorunu çözebiliriz
+      // Şimdilik formu sıfırladıktan sonra takvimdeki toplantıları görüntüleyelim
+      setActiveTab('my-meetings');
+      
       // 3 saniye sonra başarı mesajını temizle
       setTimeout(() => {
         setFormData(prev => ({ ...prev, success: '' }));
       }, 3000);
       
-    } catch (error: any) { // Hata tipini any olarak belirterek TypeScript hatasını gideriyoruz
+    } catch (error: any) {
       console.error('Toplantı oluşturulurken hata:', error);
       const errorMsg = error.message || t('meetingCreateError', 'Toplantı oluşturulurken bir hata oluştu.');
       

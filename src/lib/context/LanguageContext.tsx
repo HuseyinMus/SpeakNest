@@ -134,7 +134,19 @@ function translateKey(key: string, language: Language, params?: any): string {
       'topic_environment': 'Çevre',
       'topic_entertainment': 'Eğlence ve Hobiler',
       'edit': 'Düzenle',
-      'noMeetingsYet': 'Henüz toplantınız bulunmuyor.'
+      'noMeetingsYet': 'Henüz toplantınız bulunmuyor.',
+      'scheduledStatus': 'Zamanlanmış',
+      'activeStatus': 'Aktif',
+      'completedStatus': 'Tamamlandı',
+      'cancelledStatus': 'İptal Edildi',
+      'meetingStatusPrefix': 'Durum',
+      'meetUrl': 'Toplantı Bağlantısı',
+      'meetingLinkCopied': 'Toplantı bağlantısı panoya kopyalandı',
+      'googleMeetIntegration': 'Google Meet Entegrasyonu',
+      'meetingWillBeActive': 'Toplantı, başlangıç zamanından 15 dakika önce aktif olacak',
+      'meetingActiveNow': 'Bu toplantı şu anda aktif',
+      'copyMeetingLink': 'Toplantı Bağlantısını Kopyala',
+      'joinMeeting': 'Toplantıya Katıl'
     },
     en: {
       'appName': 'English Practice Platform',
@@ -249,7 +261,19 @@ function translateKey(key: string, language: Language, params?: any): string {
       'topic_environment': 'Environment',
       'topic_entertainment': 'Entertainment and Hobbies',
       'edit': 'Edit',
-      'noMeetingsYet': 'You don\'t have any meetings yet.'
+      'noMeetingsYet': 'You don\'t have any meetings yet.',
+      'scheduledStatus': 'Scheduled',
+      'activeStatus': 'Active',
+      'completedStatus': 'Completed',
+      'cancelledStatus': 'Cancelled',
+      'meetingStatusPrefix': 'Status',
+      'meetUrl': 'Meeting Link',
+      'meetingLinkCopied': 'Meeting link copied to clipboard',
+      'googleMeetIntegration': 'Google Meet Integration',
+      'meetingWillBeActive': 'The meeting will be active 15 minutes before the start time',
+      'meetingActiveNow': 'This meeting is currently active',
+      'copyMeetingLink': 'Copy Meeting Link',
+      'joinMeeting': 'Join Meeting'
     },
     es: {
       'appName': 'Plataforma de Práctica de Inglés',
@@ -364,7 +388,19 @@ function translateKey(key: string, language: Language, params?: any): string {
       'topic_environment': 'Medio Ambiente',
       'topic_entertainment': 'Entretenimiento y Pasatiempos',
       'edit': 'Editar',
-      'noMeetingsYet': 'Aún no tienes reuniones.'
+      'noMeetingsYet': 'Aún no tienes reuniones.',
+      'scheduledStatus': 'Programada',
+      'activeStatus': 'Activa',
+      'completedStatus': 'Completada',
+      'cancelledStatus': 'Cancelada',
+      'meetingStatusPrefix': 'Estado',
+      'meetUrl': 'Enlace de la Reunión',
+      'meetingLinkCopied': 'Enlace de la reunión copiado al portapapeles',
+      'googleMeetIntegration': 'Integración con Google Meet',
+      'meetingWillBeActive': 'La reunión estará activa 15 minutos antes de la hora de inicio',
+      'meetingActiveNow': 'Esta reunión está activa actualmente',
+      'copyMeetingLink': 'Copiar Enlace de la Reunión',
+      'joinMeeting': 'Unirse a la Reunión'
     },
     ar: {
       'appName': 'منصة ممارسة اللغة الإنجليزية',
@@ -479,7 +515,19 @@ function translateKey(key: string, language: Language, params?: any): string {
       'topic_environment': 'البيئة',
       'topic_entertainment': 'الترفيه والهوايات',
       'edit': 'تعديل',
-      'noMeetingsYet': 'ليس لديك أي اجتماعات حتى الآن.'
+      'noMeetingsYet': 'ليس لديك أي اجتماعات حتى الآن.',
+      'scheduledStatus': 'مجدولة',
+      'activeStatus': 'نشطة',
+      'completedStatus': 'مكتملة',
+      'cancelledStatus': 'ملغاة',
+      'meetingStatusPrefix': 'الحالة',
+      'meetUrl': 'رابط الاجتماع',
+      'meetingLinkCopied': 'تم نسخ رابط الاجتماع إلى الحافظة',
+      'googleMeetIntegration': 'تكامل مع Google Meet',
+      'meetingWillBeActive': 'سيكون الاجتماع نشطًا قبل 15 دقيقة من وقت البدء',
+      'meetingActiveNow': 'هذا الاجتماع نشط حاليًا',
+      'copyMeetingLink': 'نسخ رابط الاجتماع',
+      'joinMeeting': 'الانضمام إلى الاجتماع'
     }
   };
 
