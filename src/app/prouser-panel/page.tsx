@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, Settings, LogOut, Calendar, CheckSquare, Plus, MinusCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useToast } from '@/lib/context/ToastContext';
 
 export default function ProUserPanel() {
   const { t } = useLanguage();
@@ -20,6 +21,7 @@ export default function ProUserPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
   
   const router = useRouter();
+  const toast = useToast();
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -412,6 +414,7 @@ interface CreateMeetingFormProps {
 // Toplantı Oluşturma Formu Bileşeni
 function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
   const { t } = useLanguage();
+  const toast = useToast();
   const router = useRouter();
   
   // Form State
@@ -492,23 +495,31 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
       
       // Form validasyonu
       if (!formData.title.trim()) {
-        throw new Error(t('titleRequired', 'Başlık alanı zorunludur.'));
+        const errorMsg = t('titleRequired', 'Başlık alanı zorunludur.');
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       if (!formData.date || !formData.time) {
-        throw new Error(t('dateTimeRequired', 'Tarih ve saat seçimi zorunludur.'));
+        const errorMsg = t('dateTimeRequired', 'Tarih ve saat seçimi zorunludur.');
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       // Tarih bilgisini oluşturma
       const meetingDateTime = new Date(`${formData.date}T${formData.time}`);
       
       if (meetingDateTime < new Date()) {
-        throw new Error(t('futureDateRequired', 'Toplantı tarihi gelecekte olmalıdır.'));
+        const errorMsg = t('futureDateRequired', 'Toplantı tarihi gelecekte olmalıdır.');
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       // Katılımcı sayısı doğrulama
       if (formData.participantCount < 3 || formData.participantCount > 6) {
-        throw new Error(t('participantCountError', 'Katılımcı sayısı 3 ile 6 arasında olmalıdır.'));
+        const errorMsg = t('participantCountError', 'Katılımcı sayısı 3 ile 6 arasında olmalıdır.');
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       // Firestore'a toplantı bilgilerini ekle
@@ -535,6 +546,9 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
       const docRef = await addDoc(collection(db, 'meetings'), meetingData);
       
       // Başarılı mesajı göster
+      const successMsg = t('meetingCreateSuccess', 'Toplantı başarıyla oluşturuldu!');
+      toast.success(successMsg);
+      
       setFormData({
         title: '',
         description: '',
@@ -547,7 +561,7 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
         questions: [],
         isSubmitting: false,
         error: '',
-        success: t('meetingCreateSuccess', 'Toplantı başarıyla oluşturuldu!')
+        success: successMsg
       });
       
       // 3 saniye sonra başarı mesajını temizle
@@ -557,10 +571,12 @@ function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
       
     } catch (error: any) { // Hata tipini any olarak belirterek TypeScript hatasını gideriyoruz
       console.error('Toplantı oluşturulurken hata:', error);
+      const errorMsg = error.message || t('meetingCreateError', 'Toplantı oluşturulurken bir hata oluştu.');
+      
       setFormData(prev => ({ 
         ...prev, 
         isSubmitting: false, 
-        error: error.message || t('meetingCreateError', 'Toplantı oluşturulurken bir hata oluştu.')
+        error: errorMsg
       }));
     }
   };
