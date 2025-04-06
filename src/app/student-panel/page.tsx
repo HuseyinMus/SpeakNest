@@ -5,7 +5,7 @@ import { auth, db } from '@/lib/firebase/config';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import Image from 'next/image';
-import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, Settings } from 'lucide-react';
+import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, Settings, LogOut } from 'lucide-react';
 
 export default function StudentPanel() {
   const [user, setUser] = useState<any>(null);
