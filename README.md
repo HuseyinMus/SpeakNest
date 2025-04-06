@@ -1,6 +1,6 @@
-# Next.js + Firebase + OOP/AOP/RBAC Projesi
+# SpeakNest - Eğitim Platformu
 
-Bu proje, Next.js ve Firebase kullanarak Nesne Yönelimli Programlama (OOP), Görünüş Odaklı Programlama (AOP) ve Rol Tabanlı Erişim Kontrolü (RBAC) prensiplerine uygun bir web uygulaması örneğidir.
+Bu proje, Next.js ve Firebase kullanarak Nesne Yönelimli Programlama (OOP), Görünüş Odaklı Programlama (AOP) ve Rol Tabanlı Erişim Kontrolü (RBAC) prensiplerine uygun bir eğitim platformu web uygulamasıdır.
 
 ## Özellikler
 
@@ -9,12 +9,18 @@ Bu proje, Next.js ve Firebase kullanarak Nesne Yönelimli Programlama (OOP), Gö
 - **OOP Prensipleri**: Sınıflar, Inheritance, Encapsulation, Singleton Pattern
 - **AOP Prensipleri**: TypeScript Dekoratörleri, Cross-Cutting Concerns, Method Interception
 - **RBAC Prensipleri**: Rol tabanlı erişim kontrolü, İzin yönetimi
+- **Kullanıcı Rolleri**: Admin, Öğretmen, Öğrenci, Editor, Pro Kullanıcı
+- **Öğrenci Paneli**: Kurslar, ödevler ve profil yönetimi
 
 ## Proje Yapısı
 
 ```
 src/
 ├── app/                     # Next.js App Router
+│   ├── dashboard/           # Admin ve yönetici paneli
+│   ├── student-panel/       # Öğrenci paneli
+│   ├── login/               # Giriş sayfası
+│   └── register/            # Kayıt sayfası
 ├── components/              # React bileşenleri
 ├── lib/
 │   ├── aop/                 # AOP dekoratörleri ve middleware'ler
@@ -61,42 +67,19 @@ Bu projede şu AOP prensipleri kullanılmıştır:
 
 Bu projede şu RBAC prensipleri kullanılmıştır:
 
-- **Roller**: Admin, Manager, User, Guest
+- **Roller**: Admin, Öğretmen, Öğrenci, Editor, Pro Kullanıcı
 - **İzinler**: Create, Read, Update, Delete
 - **Yetkilendirme**: Dekoratörler ve middleware'ler ile
 
-## Geliştirme
+## Öğrenci Paneli
 
-### Servis Eklemek
+Öğrenci paneli şu özelliklere sahiptir:
 
-Yeni bir servis eklemek için `src/lib/services` klasörüne gidip yeni bir servis sınıfı oluşturun:
-
-```typescript
-import { Cache, Logger, RequirePermission } from '@/lib/aop/decorators';
-import { Permission } from '@/lib/auth/rbac';
-
-export class YeniServis {
-  private static instance: YeniServis;
-  
-  private constructor() {}
-  
-  public static getInstance(): YeniServis {
-    if (!YeniServis.instance) {
-      YeniServis.instance = new YeniServis();
-    }
-    return YeniServis.instance;
-  }
-  
-  @Cache()
-  @Logger
-  @RequirePermission(Permission.READ)
-  public async ornekMetot() {
-    // ...metot uygulaması
-  }
-}
-
-export const yeniServis = YeniServis.getInstance();
-```
+- Profil bilgilerine erişim ve düzenleme
+- Kayıtlı kursların listesi
+- Bekleyen ödevlerin takibi
+- Kurs içeriklerine erişim
+- Ödev teslimi
 
 ## Lisans
 
