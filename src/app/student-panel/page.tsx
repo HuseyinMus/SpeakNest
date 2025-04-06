@@ -5,7 +5,7 @@ import { auth, db } from '@/lib/firebase/config';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import Image from 'next/image';
-import { Menu, X, Home, Book, FileText, User, LogOut, BarChart, Calendar, Settings } from 'lucide-react';
+import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, Settings } from 'lucide-react';
 
 export default function StudentPanel() {
   const [user, setUser] = useState<any>(null);
@@ -165,11 +165,12 @@ export default function StudentPanel() {
   // Menü öğeleri
   const menuItems = [
     { id: 'dashboard', label: 'Ana Sayfa', icon: <Home size={18} /> },
-    { id: 'meetings', label: 'Toplantılarım', icon: <Calendar size={18} /> },
-    { id: 'classroom', label: 'Sınıfım', icon: <Book size={18} /> },
+    { id: 'sessions', label: 'Konuşma Oturumları', icon: <MessageCircle size={18} /> },
+    { id: 'practice-rooms', label: 'Pratik Odaları', icon: <Users size={18} /> },
+    { id: 'upcoming', label: 'Yaklaşan Pratiklerim', icon: <Clock size={18} /> },
     { id: 'assignments', label: 'Ödevlerim', icon: <FileText size={18} /> },
     { id: 'profile', label: 'Profilim', icon: <User size={18} /> },
-    { id: 'statistics', label: 'İstatistikler', icon: <BarChart size={18} /> },
+    { id: 'statistics', label: 'İstatistiklerim', icon: <BarChart size={18} /> },
     { id: 'settings', label: 'Ayarlar', icon: <Settings size={18} /> },
   ];
 
@@ -182,21 +183,48 @@ export default function StudentPanel() {
             {/* Hoş geldin kartı */}
             <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-100">
               <h2 className="text-xl font-semibold text-slate-800 mb-2">Hoş Geldin, {userProfile?.displayName || userProfile?.firstName || 'Öğrenci'}</h2>
-              <p className="text-slate-600">Bugün harika şeyler öğrenmeye hazır mısın?</p>
+              <p className="text-slate-600">Bugün İngilizce pratiği yapmak için harika bir gün!</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors text-sm">
-                  Hızlı Erişim
+                  Oturum Bul
                 </button>
                 <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors text-sm">
-                  Yardım Al
+                  Hızlı Eşleşme
                 </button>
               </div>
             </div>
             
-            {/* Aktif Kurslar */}
+            {/* Yaklaşan Konuşma Oturumları */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
               <div className="bg-slate-700 px-6 py-3">
-                <h2 className="text-base font-medium text-white">Sınıfım</h2>
+                <h2 className="text-base font-medium text-white">Yaklaşan Konuşma Oturumlarım</h2>
+              </div>
+              <div className="p-6">
+                <div className="text-center py-8 rounded-md bg-slate-50">
+                  <p className="text-slate-500">Henüz yaklaşan konuşma oturumunuz bulunmamaktadır.</p>
+                  <button 
+                    className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition-colors text-sm"
+                    onClick={() => setActiveTab('sessions')}
+                  >
+                    Konuşma Oturumu Bul
+                  </button>
+                </div>
+                
+                <div className="mt-4 text-right">
+                  <button 
+                    className="text-slate-700 hover:text-slate-900 text-sm font-medium transition-colors"
+                    onClick={() => setActiveTab('upcoming')}
+                  >
+                    Tüm Yaklaşan Pratiklerimi Görüntüle →
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Pratik Odaları */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
+              <div className="bg-slate-600 px-6 py-3">
+                <h2 className="text-base font-medium text-white">Popüler Pratik Odaları</h2>
               </div>
               <div className="p-6">
                 {activeCourses.length > 0 ? (
@@ -207,13 +235,13 @@ export default function StudentPanel() {
                         <p className="text-slate-600 text-sm mt-1">{course.description}</p>
                         <div className="mt-3 flex items-center justify-between">
                           <span className="text-sm text-slate-500">
-                            Eğitmen: {course.instructorName || 'Belirtilmemiş'}
+                            Host: {course.instructorName || 'Belirtilmemiş'}
                           </span>
                           <button 
                             className="text-sm px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 transition-colors"
                             onClick={() => router.push(`/courses/${course.id}`)}
                           >
-                            Sınıfa Gir
+                            Odaya Katıl
                           </button>
                         </div>
                       </div>
@@ -221,116 +249,135 @@ export default function StudentPanel() {
                   </div>
                 ) : (
                   <div className="text-center py-8 rounded-md bg-slate-50">
-                    <p className="text-slate-500">Henüz aktif sınıfınız bulunmamaktadır.</p>
+                    <p className="text-slate-500">Henüz aktif pratik odası bulunmamaktadır.</p>
                   </div>
                 )}
                 
                 <div className="mt-4 text-right">
                   <button 
                     className="text-slate-700 hover:text-slate-900 text-sm font-medium transition-colors"
-                    onClick={() => setActiveTab('classroom')}
+                    onClick={() => setActiveTab('practice-rooms')}
                   >
-                    Tüm Sınıfları Görüntüle →
+                    Tüm Pratik Odalarını Görüntüle →
                   </button>
                 </div>
               </div>
             </div>
-            
-            {/* Bekleyen Ödevler */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
-              <div className="bg-slate-600 px-6 py-3">
-                <h2 className="text-base font-medium text-white">Bekleyen Ödevlerim</h2>
-              </div>
-              <div className="p-6">
-                {pendingAssignments.length > 0 ? (
-                  <div className="space-y-4">
-                    {pendingAssignments.map((assignment) => (
-                      <div key={assignment.id} className="border border-slate-200 rounded-md p-4 hover:bg-slate-50 transition-colors">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="text-lg font-medium text-slate-800">{assignment.title}</h3>
-                            <p className="text-slate-600 text-sm mt-1">{assignment.description}</p>
-                            <span className="text-sm text-slate-500 block mt-2">
-                              Sınıf: {assignment.courseName || 'Belirtilmemiş'}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                              new Date(assignment.dueDate.seconds * 1000) < new Date() 
-                                ? 'bg-red-100 text-red-700' 
-                                : 'bg-amber-100 text-amber-700'
-                            }`}>
-                              Teslim: {new Date(assignment.dueDate.seconds * 1000).toLocaleDateString('tr-TR')}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex justify-end">
-                          <button 
-                            className="text-sm px-3 py-1.5 rounded-md bg-slate-600 text-white hover:bg-slate-700 transition-colors"
-                            onClick={() => router.push(`/assignments/${assignment.id}`)}
-                          >
-                            Ödevi Görüntüle
-                          </button>
-                        </div>
+          </div>
+        );
+      case 'sessions':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-slate-700 px-6 py-3">
+              <h2 className="text-base font-medium text-white">Konuşma Oturumları</h2>
+            </div>
+            <div className="p-6">
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-slate-800 mb-4">Açık Oturumlar</h3>
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                  <div className="border border-slate-200 rounded-md p-4 hover:bg-slate-50 transition-colors">
+                    <div className="flex justify-between">
+                      <h4 className="text-lg font-medium text-slate-800">Daily Conversation Practice</h4>
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Açık</span>
+                    </div>
+                    <p className="text-slate-600 text-sm mt-1">Practice everyday English with native speakers.</p>
+                    <div className="flex justify-between items-center mt-3 text-sm text-slate-500">
+                      <div>Host: <span className="font-medium">Sarah Johnson</span></div>
+                      <div>Tarih: <span className="font-medium">24 Nisan 2023, 18:00</span></div>
+                    </div>
+                    <div className="flex justify-between items-center mt-4">
+                      <div className="flex items-center space-x-1">
+                        <span className="flex items-center text-sm text-slate-600">
+                          <Users size={14} className="mr-1" /> 3/8 Katılımcı
+                        </span>
                       </div>
-                    ))}
+                      <button className="text-sm px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 transition-colors">
+                        Kaydol
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8 rounded-md bg-slate-50">
-                    <p className="text-slate-500">Bekleyen ödeviniz bulunmamaktadır.</p>
+                  
+                  <div className="border border-slate-200 rounded-md p-4 hover:bg-slate-50 transition-colors">
+                    <div className="flex justify-between">
+                      <h4 className="text-lg font-medium text-slate-800">Business English</h4>
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Açık</span>
+                    </div>
+                    <p className="text-slate-600 text-sm mt-1">Improve your business English skills for professional settings.</p>
+                    <div className="flex justify-between items-center mt-3 text-sm text-slate-500">
+                      <div>Host: <span className="font-medium">Michael Brown</span></div>
+                      <div>Tarih: <span className="font-medium">26 Nisan 2023, 20:00</span></div>
+                    </div>
+                    <div className="flex justify-between items-center mt-4">
+                      <div className="flex items-center space-x-1">
+                        <span className="flex items-center text-sm text-slate-600">
+                          <Users size={14} className="mr-1" /> 2/6 Katılımcı
+                        </span>
+                      </div>
+                      <button className="text-sm px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 transition-colors">
+                        Kaydol
+                      </button>
+                    </div>
                   </div>
-                )}
-                
-                <div className="mt-4 text-right">
-                  <button 
-                    className="text-slate-700 hover:text-slate-900 text-sm font-medium transition-colors"
-                    onClick={() => setActiveTab('assignments')}
-                  >
-                    Tüm Ödevleri Görüntüle →
-                  </button>
+                </div>
+              </div>
+              
+              <div className="mt-8">
+                <h3 className="text-lg font-medium text-slate-800 mb-4">Kayıtlı Olduğum Oturumlar</h3>
+                <div className="text-center py-8 rounded-md bg-slate-50">
+                  <p className="text-slate-500">Henüz kayıtlı olduğunuz bir konuşma oturumu bulunmamaktadır.</p>
                 </div>
               </div>
             </div>
           </div>
         );
-      case 'meetings':
+      case 'practice-rooms':
         return (
           <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
             <div className="bg-slate-700 px-6 py-3">
-              <h2 className="text-base font-medium text-white">Toplantılarım</h2>
+              <h2 className="text-base font-medium text-white">Pratik Odaları</h2>
             </div>
             <div className="p-6">
-              <div className="text-center py-8 rounded-md bg-slate-50">
-                <p className="text-slate-500">Henüz planlanmış toplantınız bulunmamaktadır.</p>
-                <button className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition-colors text-sm">
-                  Toplantı Oluştur
-                </button>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-slate-800">Tüm Odalar</h3>
+                <div className="flex space-x-2">
+                  <select className="text-sm border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700">
+                    <option>Tüm Seviyeler</option>
+                    <option>Başlangıç</option>
+                    <option>Orta</option>
+                    <option>İleri</option>
+                  </select>
+                  <select className="text-sm border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700">
+                    <option>Tüm Konular</option>
+                    <option>Günlük Konuşma</option>
+                    <option>İş İngilizcesi</option>
+                    <option>Seyahat</option>
+                  </select>
+                </div>
               </div>
-            </div>
-          </div>
-        );
-      case 'classroom':
-        return (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-slate-700 px-6 py-3">
-              <h2 className="text-base font-medium text-white">Sınıfım</h2>
-            </div>
-            <div className="p-6">
+              
               {activeCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activeCourses.map((course) => (
                     <div key={course.id} className="border border-slate-200 rounded-md p-4 hover:bg-slate-50 transition-colors">
                       <h3 className="text-lg font-medium text-slate-800">{course.title}</h3>
                       <p className="text-slate-600 text-sm mt-1">{course.description}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                          {course.level || 'Orta Seviye'}
+                        </span>
+                        <span className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                          {course.topic || 'Günlük Konuşma'}
+                        </span>
+                      </div>
                       <div className="mt-3 flex items-center justify-between">
                         <span className="text-sm text-slate-500">
-                          Eğitmen: {course.instructorName || 'Belirtilmemiş'}
+                          Host: {course.instructorName || 'Belirtilmemiş'}
                         </span>
                         <button 
                           className="text-sm px-3 py-1.5 rounded-md bg-slate-700 text-white hover:bg-slate-800 transition-colors"
                           onClick={() => router.push(`/courses/${course.id}`)}
                         >
-                          Sınıfa Gir
+                          Odaya Katıl
                         </button>
                       </div>
                     </div>
@@ -338,9 +385,28 @@ export default function StudentPanel() {
                 </div>
               ) : (
                 <div className="text-center py-8 rounded-md bg-slate-50">
-                  <p className="text-slate-500">Henüz aktif sınıfınız bulunmamaktadır.</p>
+                  <p className="text-slate-500">Henüz aktif pratik odası bulunmamaktadır.</p>
                 </div>
               )}
+            </div>
+          </div>
+        );
+      case 'upcoming':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-slate-700 px-6 py-3">
+              <h2 className="text-base font-medium text-white">Yaklaşan Pratiklerim</h2>
+            </div>
+            <div className="p-6">
+              <div className="text-center py-8 rounded-md bg-slate-50">
+                <p className="text-slate-500">Yaklaşan pratik oturumunuz bulunmamaktadır.</p>
+                <button 
+                  className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition-colors text-sm"
+                  onClick={() => setActiveTab('sessions')}
+                >
+                  Konuşma Oturumu Bul
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -360,7 +426,7 @@ export default function StudentPanel() {
                           <h3 className="text-lg font-medium text-slate-800">{assignment.title}</h3>
                           <p className="text-slate-600 text-sm mt-1">{assignment.description}</p>
                           <span className="text-sm text-slate-500 block mt-2">
-                            Sınıf: {assignment.courseName || 'Belirtilmemiş'}
+                            Pratik Odası: {assignment.courseName || 'Belirtilmemiş'}
                           </span>
                         </div>
                         <div className="text-right">
@@ -435,8 +501,8 @@ export default function StudentPanel() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Öğrenci No:</span>
-                  <span className="font-medium text-slate-700">{userProfile?.studentId || 'Belirtilmemiş'}</span>
+                  <span className="text-slate-500">İngilizce Seviyesi:</span>
+                  <span className="font-medium text-slate-700">{userProfile?.englishLevel || 'Belirtilmemiş'}</span>
                 </div>
               </div>
               
@@ -452,16 +518,41 @@ export default function StudentPanel() {
           </div>
         );
       case 'statistics':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-slate-700 px-6 py-3">
+              <h2 className="text-base font-medium text-white">İstatistiklerim</h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-slate-50 p-4 rounded-lg text-center">
+                  <h3 className="text-sm text-slate-500 mb-1">Toplam Pratik</h3>
+                  <p className="text-3xl font-semibold text-slate-800">0</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-lg text-center">
+                  <h3 className="text-sm text-slate-500 mb-1">Konuşma Saati</h3>
+                  <p className="text-3xl font-semibold text-slate-800">0 saat</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-lg text-center">
+                  <h3 className="text-sm text-slate-500 mb-1">Tamamlanan Ödev</h3>
+                  <p className="text-3xl font-semibold text-slate-800">0</p>
+                </div>
+              </div>
+              
+              <div className="text-center py-8">
+                <p className="text-slate-500">Henüz yeterli veri bulunmamaktadır.</p>
+              </div>
+            </div>
+          </div>
+        );
       case 'settings':
         return (
           <div className="bg-white rounded-lg shadow-sm border border-slate-100 p-8 text-center">
             <div className="text-5xl mb-4 text-slate-300 flex justify-center">
-              {activeTab === 'statistics' && <BarChart size={56} className="text-slate-400" />}
-              {activeTab === 'settings' && <Settings size={56} className="text-slate-400" />}
+              <Settings size={56} className="text-slate-400" />
             </div>
             <h2 className="text-xl font-semibold mb-2 text-slate-800">
-              {activeTab === 'statistics' && 'İstatistikler'}
-              {activeTab === 'settings' && 'Ayarlar'}
+              Ayarlar
             </h2>
             <p className="text-slate-500">Bu özellik henüz geliştirme aşamasındadır.</p>
           </div>
@@ -475,7 +566,7 @@ export default function StudentPanel() {
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Mobil menü butonu */}
       <div className="bg-white p-4 flex justify-between items-center md:hidden border-b shadow-sm sticky top-0 z-50">
-        <h1 className="text-lg font-semibold text-slate-800">Öğrenci Paneli</h1>
+        <h1 className="text-lg font-semibold text-slate-800">İngilizce Pratik</h1>
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100"
@@ -572,7 +663,7 @@ export default function StudentPanel() {
       <div className="flex-1 p-4 md:p-6 md:pt-6 overflow-auto">
         <div className="hidden md:block mb-6">
           <h1 className="text-xl font-semibold text-slate-800">
-            {menuItems.find(item => item.id === activeTab)?.label || 'Öğrenci Paneli'}
+            {menuItems.find(item => item.id === activeTab)?.label || 'İngilizce Pratik'}
           </h1>
         </div>
         
