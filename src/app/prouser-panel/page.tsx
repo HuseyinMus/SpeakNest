@@ -38,7 +38,7 @@ export default function ProUserPanel() {
         return () => unsubscribe();
       } catch (err) {
         console.error('Auth kontrolü sırasında hata:', err);
-        setError('Oturum kontrolü sırasında bir hata oluştu.');
+        setError(t('sessionCheckError', 'Toplantı kontrolü sırasında bir hata oluştu.'));
         setLoading(false);
       }
     };
@@ -72,11 +72,11 @@ export default function ProUserPanel() {
         // Aktif toplantıları getir
         await fetchMeetingData(userId);
       } else {
-        setError('Kullanıcı profili bulunamadı.');
+        setError(t('userProfileNotFound'));
       }
     } catch (err) {
       console.error('Profil verisi alınamadı:', err);
-      setError('Profil bilgileri alınırken bir hata oluştu.');
+      setError(t('profileDataError'));
     }
   };
   
@@ -115,9 +115,9 @@ export default function ProUserPanel() {
       // Hata mesajını daha kullanıcı dostu hale getir
       if (err.code === 'permission-denied') {
         console.log('Yetki hatası: Meetings koleksiyonuna erişim izni yok');
-        setError('Toplantı bilgilerinize erişim sağlanamıyor. Yöneticiye başvurun.');
+        setError(t('meetingsAccessError'));
       } else {
-        setError('Toplantı bilgileri alınırken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+        setError(t('meetingsDataError'));
       }
     }
   };
@@ -136,7 +136,7 @@ export default function ProUserPanel() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center p-8 rounded-lg bg-white shadow-sm">
           <div className="w-10 h-10 rounded-full border-2 border-t-slate-500 border-b-slate-300 border-l-transparent border-r-transparent animate-spin mb-4"></div>
-          <div className="text-lg font-medium text-slate-700">Yükleniyor...</div>
+          <div className="text-lg font-medium text-slate-700">{t('loading')}</div>
         </div>
       </div>
     );
@@ -146,13 +146,13 @@ export default function ProUserPanel() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="bg-white border border-slate-200 text-slate-700 px-6 py-5 rounded-lg max-w-md shadow-sm">
-          <h2 className="text-lg font-semibold mb-3 text-red-600">Hata</h2>
+          <h2 className="text-lg font-semibold mb-3 text-red-600">{t('error')}</h2>
           <p className="text-slate-600">{error}</p>
           <button 
             onClick={() => router.push('/login')}
             className="mt-5 w-full py-2 px-4 rounded-md bg-slate-700 text-white font-medium hover:bg-slate-800 transition-colors"
           >
-            Giriş Sayfasına Dön
+            {t('returnToLogin')}
           </button>
         </div>
       </div>
@@ -162,10 +162,10 @@ export default function ProUserPanel() {
   // Menü öğeleri - ProUser için özelleştirilmiş
   const menuItems = [
     { id: 'dashboard', label: t('home'), icon: <Home size={18} /> },
-    { id: 'my-meetings', label: 'Oturumlarım', icon: <Calendar size={18} /> },
-    { id: 'create-meeting', label: 'Oturum Oluştur', icon: <MessageCircle size={18} /> },
-    { id: 'participants', label: 'Katılımcılar', icon: <Users size={18} /> },
-    { id: 'evaluations', label: 'Değerlendirmeler', icon: <CheckSquare size={18} /> },
+    { id: 'my-meetings', label: t('myMeetings'), icon: <Calendar size={18} /> },
+    { id: 'create-meeting', label: t('createMeeting'), icon: <MessageCircle size={18} /> },
+    { id: 'participants', label: t('participants'), icon: <Users size={18} /> },
+    { id: 'evaluations', label: t('evaluations'), icon: <CheckSquare size={18} /> },
     { id: 'profile', label: t('profile'), icon: <User size={18} /> },
     { id: 'statistics', label: t('statistics'), icon: <BarChart size={18} /> },
     { id: 'settings', label: t('settings'), icon: <Settings size={18} /> },
@@ -196,7 +196,7 @@ export default function ProUserPanel() {
               {userProfile?.photoURL ? (
                 <Image 
                   src={userProfile.photoURL} 
-                  alt={userProfile.displayName || 'Profil'}
+                  alt={userProfile.displayName || t('profile')}
                   width={40}
                   height={40}
                   className="rounded-full"
@@ -208,10 +208,10 @@ export default function ProUserPanel() {
               )}
               <div>
                 <div className="font-medium text-slate-800">
-                  {userProfile?.displayName || `${userProfile?.firstName} ${userProfile?.lastName}` || 'Konuşma Sunucusu'}
+                  {userProfile?.displayName || `${userProfile?.firstName} ${userProfile?.lastName}` || t('conversationHost')}
                 </div>
                 <div className="text-xs text-slate-500">
-                  {userProfile?.role === 'proUser' ? 'Konuşma Sunucusu' : userProfile?.role}
+                  {userProfile?.role === 'proUser' ? t('conversationHost') : userProfile?.role}
                 </div>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function ProUserPanel() {
             </ul>
             
             <div className="mt-6 px-3 py-4 border-t pt-4">
-              <p className="text-xs text-slate-500 mb-2">Dil seçin</p>
+              <p className="text-xs text-slate-500 mb-2">{t('selectLanguage')}</p>
               <LanguageSwitcher variant="select" className="w-full" />
             </div>
           </div>
@@ -274,22 +274,28 @@ export default function ProUserPanel() {
           <div className="space-y-6">
             {/* Hoş geldin kartı */}
             <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-lg shadow-md p-6 border border-teal-400">
-              <h2 className="text-xl font-semibold text-white mb-2">Hoş geldin, {userProfile?.displayName || userProfile?.firstName || 'Konuşma Sunucusu'}</h2>
-              <p className="text-white opacity-90">Bugün İngilizce pratik yapmak isteyenlere yardımcı olma günü!</p>
+              <h2 className="text-xl font-semibold text-white mb-2">{t('welcomeMessage', { name: userProfile?.displayName || userProfile?.firstName || t('conversationHost') })}</h2>
+              <p className="text-white opacity-90">{t('hostDayMessage')}</p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <button className="px-4 py-2 bg-white hover:bg-teal-50 text-teal-700 rounded-md transition-colors text-sm font-medium shadow-sm">
-                  Yeni Oturum Oluştur
+                <button 
+                  onClick={() => setActiveTab('create-meeting')}
+                  className="px-4 py-2 bg-white hover:bg-teal-50 text-teal-700 rounded-md transition-colors text-sm font-medium shadow-sm"
+                >
+                  {t('createNewMeeting')}
                 </button>
-                <button className="px-4 py-2 bg-teal-700 bg-opacity-30 hover:bg-opacity-40 text-white rounded-md transition-colors text-sm font-medium shadow-sm border border-teal-400">
-                  Katılımcıları Görüntüle
+                <button 
+                  onClick={() => setActiveTab('participants')}
+                  className="px-4 py-2 bg-teal-700 bg-opacity-30 hover:bg-opacity-40 text-white rounded-md transition-colors text-sm font-medium shadow-sm border border-teal-400"
+                >
+                  {t('viewParticipants')}
                 </button>
               </div>
             </div>
             
-            {/* Aktif Oturumlarım */}
+            {/* Aktif Toplantılarım */}
             <div className="bg-white rounded-lg shadow-md border border-teal-100 overflow-hidden">
               <div className="bg-gradient-to-r from-teal-600 to-emerald-500 px-6 py-3">
-                <h2 className="text-base font-medium text-white">Aktif Oturumlarım</h2>
+                <h2 className="text-base font-medium text-white">{t('activeMeetings')}</h2>
               </div>
               <div className="p-6">
                 {activeMeetings.length > 0 ? (
@@ -300,25 +306,25 @@ export default function ProUserPanel() {
                         <p className="text-slate-600 text-sm mt-1">{meeting.description}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           <span className="px-2 py-1 bg-teal-100 text-teal-700 rounded text-xs">
-                            {meeting.level || 'Orta Seviye'}
+                            {meeting.level || t('intermediateLevel')}
                           </span>
                           <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                            {meeting.topic || 'Günlük Konuşma'}
+                            {meeting.topic || t('dailyConversation')}
                           </span>
                           <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                            {meeting.participants?.length || 0}/{meeting.capacity || 8} Katılımcı
+                            {meeting.participants?.length || 0}/{meeting.capacity || 8} {t('participants')}
                           </span>
                         </div>
                         <div className="mt-3 flex items-center justify-between">
                           <span className="text-sm text-slate-500">
-                            Tarih: {meeting.startTime?.toDate().toLocaleDateString() || 'Belirtilmemiş'}, 
+                            {t('date')}: {meeting.startTime?.toDate().toLocaleDateString() || t('notSpecified')}, 
                             {meeting.startTime?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ''}
                           </span>
                           <button 
                             className="text-sm px-3 py-1.5 rounded-md bg-teal-700 text-white hover:bg-teal-800 transition-colors"
                             onClick={() => router.push(`/meetings/${meeting.id}`)}
                           >
-                            Oturuma Git
+                            {t('goToMeeting')}
                           </button>
                         </div>
                       </div>
@@ -326,12 +332,12 @@ export default function ProUserPanel() {
                   </div>
                 ) : (
                   <div className="text-center py-8 rounded-md bg-slate-50">
-                    <p className="text-slate-600">Henüz aktif oturumunuz bulunmamaktadır.</p>
+                    <p className="text-slate-600">{t('noActiveMeetings')}</p>
                     <button 
                       className="mt-4 px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-500 text-white rounded-md hover:from-teal-700 hover:to-emerald-600 transition-colors text-sm shadow-sm"
                       onClick={() => setActiveTab('create-meeting')}
                     >
-                      Yeni Oturum Oluştur
+                      {t('createNewMeeting')}
                     </button>
                   </div>
                 )}
@@ -341,25 +347,25 @@ export default function ProUserPanel() {
                     className="text-teal-600 hover:text-teal-800 text-sm font-medium transition-colors"
                     onClick={() => setActiveTab('my-meetings')}
                   >
-                    Tüm Oturumlarımı Görüntüle →
+                    {t('viewAllMeetings')} →
                   </button>
                 </div>
               </div>
             </div>
             
-            {/* Yaklaşan Oturumlar */}
+            {/* Yaklaşan Toplantılar */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
               <div className="bg-slate-700 px-6 py-3">
-                <h2 className="text-base font-medium text-white">Yaklaşan Oturumlar</h2>
+                <h2 className="text-base font-medium text-white">{t('upcomingMeetings')}</h2>
               </div>
               <div className="p-6">
                 <div className="text-center py-8 rounded-md bg-slate-50">
-                  <p className="text-slate-600">Henüz planlanmış yaklaşan oturumunuz bulunmamaktadır.</p>
+                  <p className="text-slate-600">{t('noUpcomingMeetingsScheduled')}</p>
                   <button 
                     className="mt-4 px-4 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition-colors text-sm shadow-sm"
                     onClick={() => setActiveTab('create-meeting')}
                   >
-                    Oturum Planla
+                    {t('scheduleMeeting')}
                   </button>
                 </div>
               </div>
@@ -372,7 +378,7 @@ export default function ProUserPanel() {
       default:
         return (
           <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden p-6 text-center">
-            <p className="text-slate-600">Bu bölüm yakında hazır olacak.</p>
+            <p className="text-slate-600">{t('sectionComingSoon')}</p>
           </div>
         );
     }
