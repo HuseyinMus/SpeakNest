@@ -571,7 +571,6 @@ export default function StudentPanel() {
       <div className="bg-white p-4 flex justify-between items-center md:hidden border-b shadow-sm sticky top-0 z-50">
         <h1 className="text-lg font-semibold text-slate-800">{t('appName')}</h1>
         <div className="flex items-center gap-2">
-          <LanguageSwitcher variant="dropdown" />
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100"
@@ -674,7 +673,6 @@ export default function StudentPanel() {
           <h1 className="text-xl font-semibold text-slate-800">
             {menuItems.find(item => item.id === activeTab)?.label || t('appName')}
           </h1>
-          <LanguageSwitcher variant="dropdown" />
         </div>
         
         {renderContent()}
