@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase/config';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import Image from 'next/image';
-import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, Settings, LogOut, Calendar, CheckSquare } from 'lucide-react';
+import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, Settings, LogOut, Calendar, CheckSquare, Plus, MinusCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
@@ -24,7 +24,7 @@ export default function ProUserPanel() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        const unsubscribe = auth.onAuthStateChanged(async (user: any) => {
           if (user) {
             setUser(user);
             await fetchUserProfile(user.uid);
@@ -110,7 +110,7 @@ export default function ProUserPanel() {
       setActiveMeetings(meetingsData);
       */
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Toplantı verileri alınamadı:', err);
       // Hata mesajını daha kullanıcı dostu hale getir
       if (err.code === 'permission-denied') {
@@ -373,6 +373,9 @@ export default function ProUserPanel() {
           </div>
         );
       
+      case 'create-meeting':
+        return <CreateMeetingForm userId={user?.uid} userProfile={userProfile} />;
+      
       // Diğer tab içerikleri buraya eklenecek
       
       default:
@@ -383,4 +386,462 @@ export default function ProUserPanel() {
         );
     }
   }
+}
+
+// Toplantı Formu için tip tanımları
+interface MeetingFormData {
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  level: string;
+  topic: string;
+  participantCount: number;
+  keywords: string[];
+  questions: string[];
+  isSubmitting: boolean;
+  error: string;
+  success: string;
+}
+
+interface CreateMeetingFormProps {
+  userId: string | undefined;
+  userProfile: any;
+}
+
+// Toplantı Oluşturma Formu Bileşeni
+function CreateMeetingForm({ userId, userProfile }: CreateMeetingFormProps) {
+  const { t } = useLanguage();
+  const router = useRouter();
+  
+  // Form State
+  const [formData, setFormData] = useState<MeetingFormData>({
+    title: '',
+    description: '',
+    date: '',
+    time: '',
+    level: 'intermediate', // Default: Orta Seviye
+    topic: 'daily', // Default: Günlük Konuşma
+    participantCount: 6, // Default: 6 katılımcı
+    keywords: [],
+    questions: [],
+    isSubmitting: false,
+    error: '',
+    success: ''
+  });
+  
+  // Anahtar kelimeler için state
+  const [currentKeyword, setCurrentKeyword] = useState('');
+  
+  // Konu soruları için state
+  const [currentQuestion, setCurrentQuestion] = useState('');
+  
+  // Form verisini güncelleme fonksiyonu
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Anahtar kelime ekleme işlevi
+  const addKeyword = () => {
+    if (currentKeyword.trim() && !formData.keywords.includes(currentKeyword.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        keywords: [...prev.keywords, currentKeyword.trim()]
+      }));
+      setCurrentKeyword('');
+    }
+  };
+  
+  // Anahtar kelime silme işlevi
+  const removeKeyword = (keyword: string) => {
+    setFormData(prev => ({
+      ...prev,
+      keywords: prev.keywords.filter(k => k !== keyword)
+    }));
+  };
+  
+  // Soru ekleme işlevi
+  const addQuestion = () => {
+    if (currentQuestion.trim() && !formData.questions.includes(currentQuestion.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        questions: [...prev.questions, currentQuestion.trim()]
+      }));
+      setCurrentQuestion('');
+    }
+  };
+  
+  // Soru silme işlevi
+  const removeQuestion = (question: string) => {
+    setFormData(prev => ({
+      ...prev,
+      questions: prev.questions.filter(q => q !== question)
+    }));
+  };
+  
+  // Form gönderme işlevi
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    try {
+      setFormData(prev => ({ ...prev, isSubmitting: true, error: '' }));
+      
+      // Form validasyonu
+      if (!formData.title.trim()) {
+        throw new Error(t('titleRequired', 'Başlık alanı zorunludur.'));
+      }
+      
+      if (!formData.date || !formData.time) {
+        throw new Error(t('dateTimeRequired', 'Tarih ve saat seçimi zorunludur.'));
+      }
+      
+      // Tarih bilgisini oluşturma
+      const meetingDateTime = new Date(`${formData.date}T${formData.time}`);
+      
+      if (meetingDateTime < new Date()) {
+        throw new Error(t('futureDateRequired', 'Toplantı tarihi gelecekte olmalıdır.'));
+      }
+      
+      // Katılımcı sayısı doğrulama
+      if (formData.participantCount < 3 || formData.participantCount > 6) {
+        throw new Error(t('participantCountError', 'Katılımcı sayısı 3 ile 6 arasında olmalıdır.'));
+      }
+      
+      // Firestore'a toplantı bilgilerini ekle
+      const meetingData = {
+        title: formData.title,
+        description: formData.description,
+        startTime: meetingDateTime,
+        level: formData.level,
+        topic: formData.topic,
+        participantCount: formData.participantCount,
+        keywords: formData.keywords,
+        questions: formData.questions,
+        hostId: userId,
+        hostName: userProfile?.displayName || `${userProfile?.firstName} ${userProfile?.lastName}`,
+        hostPhotoURL: userProfile?.photoURL || null,
+        status: 'active',
+        participants: [],
+        meetUrl: '', // Google Meet API ile daha sonra eklenecek
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      // Meetings koleksiyonuna ekle
+      const docRef = await addDoc(collection(db, 'meetings'), meetingData);
+      
+      // Başarılı mesajı göster
+      setFormData({
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        level: 'intermediate',
+        topic: 'daily',
+        participantCount: 6,
+        keywords: [],
+        questions: [],
+        isSubmitting: false,
+        error: '',
+        success: t('meetingCreateSuccess', 'Toplantı başarıyla oluşturuldu!')
+      });
+      
+      // 3 saniye sonra başarı mesajını temizle
+      setTimeout(() => {
+        setFormData(prev => ({ ...prev, success: '' }));
+      }, 3000);
+      
+    } catch (error: any) { // Hata tipini any olarak belirterek TypeScript hatasını gideriyoruz
+      console.error('Toplantı oluşturulurken hata:', error);
+      setFormData(prev => ({ 
+        ...prev, 
+        isSubmitting: false, 
+        error: error.message || t('meetingCreateError', 'Toplantı oluşturulurken bir hata oluştu.')
+      }));
+    }
+  };
+  
+  // Konu seçenekleri
+  const topicOptions = [
+    { value: 'daily', label: t('dailyConversation', 'Günlük Konuşma') },
+    { value: 'business', label: t('business', 'İş Dünyası') },
+    { value: 'education', label: t('education', 'Eğitim/Okul') },
+    { value: 'science', label: t('science', 'Bilim') },
+    { value: 'technology', label: t('technology', 'Teknoloji') },
+    { value: 'arts', label: t('arts', 'Sanat ve Kültür') },
+    { value: 'travel', label: t('travel', 'Seyahat') },
+    { value: 'food', label: t('food', 'Yemek ve Mutfak') },
+    { value: 'sports', label: t('sports', 'Spor') },
+    { value: 'health', label: t('health', 'Sağlık ve Wellness') },
+    { value: 'environment', label: t('environment', 'Çevre') },
+    { value: 'entertainment', label: t('entertainment', 'Eğlence ve Hobiler') },
+  ];
+  
+  // Seviye seçenekleri
+  const levelOptions = [
+    { value: 'beginner', label: t('beginnerLevel', 'Başlangıç Seviyesi') },
+    { value: 'intermediate', label: t('intermediateLevel', 'Orta Seviye') },
+    { value: 'advanced', label: t('advancedLevel', 'İleri Seviye') },
+    { value: 'any', label: t('anyLevel', 'Tüm Seviyeler') },
+  ];
+  
+  return (
+    <div className="space-y-8">
+      {/* Başlık */}
+      <div className="bg-white p-6 shadow-md rounded-lg border-l-4 border-emerald-500">
+        <h2 className="text-xl font-semibold text-slate-800">{t('createMeeting')}</h2>
+        <p className="text-slate-600 mt-1">{t('createMeetingDescription', 'Yeni bir İngilizce pratik toplantısı oluşturun ve konuşma sunucusu olarak katılımcılara yardımcı olun.')}</p>
+      </div>
+      
+      {/* Form */}
+      <div className="bg-white p-6 shadow-md rounded-lg">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Başlık ve Açıklama */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">
+                {t('meetingTitle', 'Toplantı Başlığı')} *
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder={t('meetingTitlePlaceholder', 'Örn: Günlük Konuşma Pratiği')}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">
+                {t('meetingDescription', 'Toplantı Açıklaması')}
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder={t('meetingDescriptionPlaceholder', 'Bu toplantıda neler konuşulacak?')}
+              />
+            </div>
+          </div>
+          
+          {/* Tarih, Saat, Seviye ve Konu */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="date" className="block text-sm font-medium text-slate-700 mb-1">
+                  {t('meetingDate', 'Toplantı Tarihi')} *
+                </label>
+                <input
+                  type="date"
+                  id="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                  min={new Date().toISOString().split('T')[0]} // Bugün ve sonrası için
+                />
+              </div>
+              <div>
+                <label htmlFor="time" className="block text-sm font-medium text-slate-700 mb-1">
+                  {t('meetingTime', 'Toplantı Saati')} *
+                </label>
+                <input
+                  type="time"
+                  id="time"
+                  name="time"
+                  value={formData.time}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="level" className="block text-sm font-medium text-slate-700 mb-1">
+                  {t('level', 'Seviye')}
+                </label>
+                <select
+                  id="level"
+                  name="level"
+                  value={formData.level}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  {levelOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="topic" className="block text-sm font-medium text-slate-700 mb-1">
+                  {t('topic', 'Konu')}
+                </label>
+                <select
+                  id="topic"
+                  name="topic"
+                  value={formData.topic}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  {topicOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          {/* Katılımcı Sayısı - Tek alana dönüştürüldü */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="participantCount" className="block text-sm font-medium text-slate-700 mb-1">
+                {t('participantCount', 'Katılımcı Sayısı')}
+              </label>
+              <div className="flex items-center">
+                <input
+                  type="range"
+                  id="participantCount"
+                  name="participantCount"
+                  value={formData.participantCount}
+                  onChange={handleChange}
+                  min="3"
+                  max="6"
+                  className="w-full mr-3 accent-emerald-500"
+                />
+                <span className="text-lg font-medium text-slate-700 min-w-[30px] text-center">
+                  {formData.participantCount}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">{t('participantCountHelp', 'Toplantıya katılabilecek kişi sayısı (3-6 arası)')}</p>
+            </div>
+          </div>
+          
+          {/* Anahtar Kelimeler */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              {t('keywords', 'Anahtar Kelimeler')}
+            </label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={currentKeyword}
+                onChange={(e) => setCurrentKeyword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder={t('keywordPlaceholder', 'Yeni anahtar kelime ekle')}
+              />
+              <button
+                type="button"
+                onClick={addKeyword}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+            {formData.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.keywords.map((keyword, index) => (
+                  <div
+                    key={index}
+                    className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full flex items-center gap-1.5 text-sm"
+                  >
+                    {keyword}
+                    <button
+                      type="button"
+                      onClick={() => removeKeyword(keyword)}
+                      className="text-emerald-600 hover:text-emerald-800 focus:outline-none"
+                    >
+                      <MinusCircle size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Konu Soruları */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              {t('topicQuestions', 'Konu Soruları')}
+            </label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={currentQuestion}
+                onChange={(e) => setCurrentQuestion(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addQuestion())}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder={t('questionPlaceholder', 'Toplantıda sorulacak bir soru ekle')}
+              />
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+            {formData.questions.length > 0 && (
+              <div className="space-y-2 mt-2">
+                {formData.questions.map((question, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-2 bg-slate-100 text-slate-800 rounded-md flex items-center justify-between text-sm"
+                  >
+                    <span>{question}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(question)}
+                      className="text-slate-600 hover:text-red-600 focus:outline-none"
+                    >
+                      <MinusCircle size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Hata/Başarı Mesajları */}
+          {formData.error && (
+            <div className="px-4 py-3 bg-red-100 text-red-800 rounded-md">
+              {formData.error}
+            </div>
+          )}
+          
+          {formData.success && (
+            <div className="px-4 py-3 bg-green-100 text-green-800 rounded-md">
+              {formData.success}
+            </div>
+          )}
+          
+          {/* Gönderme Butonu */}
+          <div className="pt-4 border-t border-slate-200">
+            <button
+              type="submit"
+              disabled={formData.isSubmitting}
+              className={`w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-md font-medium shadow-sm hover:from-teal-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${formData.isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {formData.isSubmitting ? t('creating', 'Oluşturuluyor...') : t('createMeeting', 'Toplantı Oluştur')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 } 
