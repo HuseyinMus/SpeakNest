@@ -9,6 +9,7 @@ import { Menu, X, Home, MessageCircle, Users, FileText, User, BarChart, Clock, S
 import { useLanguage } from '@/lib/context/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useToast } from '@/lib/context/ToastContext';
+import { Shimmer, ShimmerCard, ShimmerList } from '@/components/ui/Shimmer';
 
 export default function ProUserPanel() {
   const { t } = useLanguage();
@@ -135,11 +136,19 @@ export default function ProUserPanel() {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center p-8 rounded-lg bg-white shadow-sm">
-          <div className="w-10 h-10 rounded-full border-2 border-t-slate-500 border-b-slate-300 border-l-transparent border-r-transparent animate-spin mb-4"></div>
-          <div className="text-lg font-medium text-slate-700">{t('loading')}</div>
+      <div className="min-h-screen flex flex-col gap-6 p-6 bg-slate-50">
+        {/* Shimmer yükleme efekti */}
+        <div className="bg-white p-6 shadow-md rounded-lg border-l-4 border-emerald-500">
+          <Shimmer className="w-3/4" height="1.75rem" />
+          <Shimmer className="w-1/2 mt-2" height="1rem" />
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ShimmerCard rows={2} />
+          <ShimmerCard rows={1} />
+        </div>
+        
+        <ShimmerList items={3} />
       </div>
     );
   }
@@ -377,6 +386,19 @@ export default function ProUserPanel() {
       
       case 'create-meeting':
         return <CreateMeetingForm userId={user?.uid} userProfile={userProfile} />;
+      
+      case 'my-meetings':
+        // Toplantılarım sekmesi için Shimmer efekti ile geçici içerik
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 shadow-md rounded-lg border-l-4 border-blue-500">
+              <h2 className="text-xl font-semibold text-slate-800">{t('myMeetings')}</h2>
+              <p className="text-slate-600 mt-1">{t('myMeetingsDescription', 'Oluşturduğunuz ve katıldığınız tüm toplantıları görüntüleyin.')}</p>
+            </div>
+            
+            <ShimmerList items={5} />
+          </div>
+        );
       
       // Diğer tab içerikleri buraya eklenecek
       
