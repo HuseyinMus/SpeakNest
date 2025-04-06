@@ -39,8 +39,8 @@ service cloud.firestore {
     
     // Kullanıcılar koleksiyonu kuralları
     match /users/{userId} {
-      // Kullanıcı kendi belgesini okuyabilir, admin tüm belgeleri okuyabilir
-      allow read: if isUser(userId) || isAdmin();
+      // Kullanıcı kendi belgesini okuyabilir, admin ve öğretmen farklı kullanıcıları okuyabilir
+      allow read: if isUser(userId) || isAdmin() || (isTeacher() && (resource.data.role == 'student'));
       
       // Yeni kullanıcı oluşturulabilir (kayıt için)
       allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
@@ -54,31 +54,37 @@ service cloud.firestore {
     
     // Kurslar koleksiyonu kuralları
     match /courses/{courseId} {
-      // Kurs okuma kuralları
+      // Kurs okuma kuralları - tüm kayıtlı kullanıcılar okuyabilir
       allow read: if isAuthenticated();
       
-      // Kurs oluşturma ve güncelleme kuralları
-      allow create, update: if isAdmin() || isTeacher();
+      // Kurs oluşturma ve güncelleme kuralları - öğretmen kendi kurslarını yönetebilir
+      allow create: if isAdmin() || isTeacher();
+      allow update: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
       
-      // Kurs silme kuralları
-      allow delete: if isAdmin();
+      // Kurs silme kuralları - öğretmen kendi kurslarını silebilir
+      allow delete: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
     }
     
     // Ödevler koleksiyonu kuralları
     match /assignments/{assignmentId} {
-      // Ödev okuma kuralları - öğrenci kendi ödevlerini görebilir
-      allow read: if isAuthenticated() && (isAdmin() || isTeacher() || 
-                   (isStudent() && request.auth.uid == resource.data.studentId));
+      // Ödev okuma kuralları - öğrenci kendi ödevlerini görebilir, öğretmen kendi kursu ile ilgili ödevleri görebilir
+      allow read: if isAuthenticated() && (
+                   isAdmin() || 
+                   (isTeacher() && resource.data.teacherId == request.auth.uid) || 
+                   (isStudent() && resource.data.studentId == request.auth.uid)
+                  );
       
-      // Ödev oluşturma kuralları
-      allow create: if isAdmin() || isTeacher();
+      // Ödev oluşturma kuralları - öğretmen kendi kursu için ödev oluşturabilir
+      allow create: if isAdmin() || (isTeacher() && request.resource.data.teacherId == request.auth.uid);
       
-      // Ödev güncelleme kuralları - öğrenci kendi ödevlerini güncelleyebilir
-      allow update: if isAdmin() || isTeacher() || 
-                    (isStudent() && request.auth.uid == resource.data.studentId);
+      // Ödev güncelleme kuralları - öğretmen kendi ödevlerini, öğrenci kendi ödevlerinin durumunu güncelleyebilir
+      allow update: if isAdmin() || 
+                    (isTeacher() && resource.data.teacherId == request.auth.uid) || 
+                    (isStudent() && resource.data.studentId == request.auth.uid && 
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'submissionDate', 'content']));
       
-      // Ödev silme kuralları
-      allow delete: if isAdmin() || isTeacher();
+      // Ödev silme kuralları - sadece öğretmen kendi ödevlerini silebilir
+      allow delete: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
     }
     
     // İçerik koleksiyonu kuralları
@@ -86,11 +92,31 @@ service cloud.firestore {
       // İçerik okuma kuralları
       allow read: if isAuthenticated();
       
-      // İçerik oluşturma ve güncelleme kuralları
-      allow create, update: if isAdmin() || isEditor() || isTeacher();
+      // İçerik oluşturma ve güncelleme kuralları - öğretmen kendi kursu ile ilgili içerik oluşturabilir
+      allow create: if isAdmin() || isEditor() || isTeacher();
+      allow update: if isAdmin() || isEditor() || (isTeacher() && resource.data.teacherId == request.auth.uid);
       
       // İçerik silme kuralları
-      allow delete: if isAdmin() || isEditor();
+      allow delete: if isAdmin() || isEditor() || (isTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+    
+    // Notlar koleksiyonu kuralları
+    match /grades/{gradeId} {
+      // Not okuma kuralları - öğrenci kendi notlarını, öğretmen kendi verdiği notları görebilir
+      allow read: if isAuthenticated() && (
+                   isAdmin() || 
+                   (isTeacher() && resource.data.teacherId == request.auth.uid) || 
+                   (isStudent() && resource.data.studentId == request.auth.uid)
+                  );
+      
+      // Not oluşturma kuralları - sadece öğretmen not oluşturabilir
+      allow create: if isAdmin() || (isTeacher() && request.resource.data.teacherId == request.auth.uid);
+      
+      // Not güncelleme kuralları - sadece öğretmen kendi verdiği notları güncelleyebilir
+      allow update: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
+      
+      // Not silme kuralları - sadece öğretmen kendi verdiği notları silebilir
+      allow delete: if isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid);
     }
   }
 } 

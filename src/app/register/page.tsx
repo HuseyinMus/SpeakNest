@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { auth, db } from '@/lib/firebase/config';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { signInWithGoogle } from '@/lib/firebase/auth';
-import { getDoc } from 'firebase/firestore';
 
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState('');
@@ -46,6 +45,8 @@ export default function RegisterPage() {
         
         if (userData.role === 'admin') {
           router.push('/dashboard');
+        } else if (userData.role === 'teacher') {
+          router.push('/teacher-panel');
         } else if (userData.role === 'student') {
           router.push('/student-panel');
         } else {

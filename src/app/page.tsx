@@ -57,6 +57,8 @@ export default function Home() {
     
     if (userProfile.role === 'admin') {
       router.push('/dashboard');
+    } else if (userProfile.role === 'teacher') {
+      router.push('/teacher-panel');
     } else if (userProfile.role === 'student') {
       router.push('/student-panel');
     } else {
@@ -90,6 +92,7 @@ export default function Home() {
                     className="px-4 py-2 bg-white text-blue-700 rounded hover:bg-blue-50 transition-colors"
                   >
                     {userProfile?.role === 'admin' ? 'Yönetim Paneli' : 
+                     userProfile?.role === 'teacher' ? 'Öğretmen Paneli' : 
                      userProfile?.role === 'student' ? 'Öğrenci Paneli' : 'Hesabım'}
                   </button>
                   <button

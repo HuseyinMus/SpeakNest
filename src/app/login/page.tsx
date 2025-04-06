@@ -44,6 +44,8 @@ export default function LoginPage() {
         
         if (userData.role === 'admin') {
           router.push('/dashboard');
+        } else if (userData.role === 'teacher') {
+          router.push('/teacher-panel');
         } else if (userData.role === 'student') {
           router.push('/student-panel');
         } else {
