@@ -1,0 +1,96 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Kullanıcı doğrulama kontrolü
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Kullanıcı kendi belgesine erişebilir
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Admin rolü kontrolü
+    function isAdmin() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Öğretmen rolü kontrolü
+    function isTeacher() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+    
+    // Öğrenci rolü kontrolü
+    function isStudent() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    // Editor rolü kontrolü
+    function isEditor() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'editor';
+    }
+    
+    // Pro User rolü kontrolü
+    function isProUser() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'proUser';
+    }
+    
+    // Kullanıcılar koleksiyonu kuralları
+    match /users/{userId} {
+      // Kullanıcı kendi belgesini okuyabilir, admin tüm belgeleri okuyabilir
+      allow read: if isUser(userId) || isAdmin();
+      
+      // Yeni kullanıcı oluşturulabilir (kayıt için)
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      
+      // Kullanıcı kendi belgesini güncelleyebilir, admin tüm belgeleri güncelleyebilir
+      allow update: if isUser(userId) || isAdmin();
+      
+      // Silme işlemi sadece admin tarafından yapılabilir
+      allow delete: if isAdmin();
+    }
+    
+    // Kurslar koleksiyonu kuralları
+    match /courses/{courseId} {
+      // Kurs okuma kuralları
+      allow read: if isAuthenticated();
+      
+      // Kurs oluşturma ve güncelleme kuralları
+      allow create, update: if isAdmin() || isTeacher();
+      
+      // Kurs silme kuralları
+      allow delete: if isAdmin();
+    }
+    
+    // Ödevler koleksiyonu kuralları
+    match /assignments/{assignmentId} {
+      // Ödev okuma kuralları - öğrenci kendi ödevlerini görebilir
+      allow read: if isAuthenticated() && (isAdmin() || isTeacher() || 
+                   (isStudent() && request.auth.uid == resource.data.studentId));
+      
+      // Ödev oluşturma kuralları
+      allow create: if isAdmin() || isTeacher();
+      
+      // Ödev güncelleme kuralları - öğrenci kendi ödevlerini güncelleyebilir
+      allow update: if isAdmin() || isTeacher() || 
+                    (isStudent() && request.auth.uid == resource.data.studentId);
+      
+      // Ödev silme kuralları
+      allow delete: if isAdmin() || isTeacher();
+    }
+    
+    // İçerik koleksiyonu kuralları
+    match /content/{contentId} {
+      // İçerik okuma kuralları
+      allow read: if isAuthenticated();
+      
+      // İçerik oluşturma ve güncelleme kuralları
+      allow create, update: if isAdmin() || isEditor() || isTeacher();
+      
+      // İçerik silme kuralları
+      allow delete: if isAdmin() || isEditor();
+    }
+  }
+} 

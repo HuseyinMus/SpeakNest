@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js + Firebase + OOP/AOP/RBAC Projesi
 
-## Getting Started
+Bu proje, Next.js ve Firebase kullanarak Nesne Yönelimli Programlama (OOP), Görünüş Odaklı Programlama (AOP) ve Rol Tabanlı Erişim Kontrolü (RBAC) prensiplerine uygun bir web uygulaması örneğidir.
 
-First, run the development server:
+## Özellikler
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 14**: App Router, Server Components, React Server Components (RSC)
+- **Firebase**: Authentication, Firestore, Storage
+- **OOP Prensipleri**: Sınıflar, Inheritance, Encapsulation, Singleton Pattern
+- **AOP Prensipleri**: TypeScript Dekoratörleri, Cross-Cutting Concerns, Method Interception
+- **RBAC Prensipleri**: Rol tabanlı erişim kontrolü, İzin yönetimi
+
+## Proje Yapısı
+
+```
+src/
+├── app/                     # Next.js App Router
+├── components/              # React bileşenleri
+├── lib/
+│   ├── aop/                 # AOP dekoratörleri ve middleware'ler
+│   ├── auth/                # RBAC ve kimlik doğrulama işlemleri
+│   ├── firebase/            # Firebase yapılandırması
+│   └── services/            # Servis sınıfları
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Başlangıç
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Bu repo'yu klonlayın
+2. Bağımlılıkları yükleyin:
+   ```bash
+   npm install
+   ```
+3. Firebase projenizi oluşturun ve `.env.local.example` dosyasını `.env.local` olarak kopyalayıp Firebase projenize ait bilgileri girin:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+4. Geliştirme sunucusunu başlatın:
+   ```bash
+   npm run dev
+   ```
+5. Tarayıcınızda [http://localhost:3000](http://localhost:3000) adresini açın
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## OOP Özellikleri
 
-## Learn More
+Bu projede şu OOP prensipleri kullanılmıştır:
 
-To learn more about Next.js, take a look at the following resources:
+- **Sınıflar**: Veri modellemesi için kullanıcı sınıfı
+- **Encapsulation**: Private değişkenler ve metodlar
+- **Inheritance**: Model sınıflarında miras alma
+- **Singleton Pattern**: Servis sınıfları için tekil örnekleme
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## AOP Özellikleri
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Bu projede şu AOP prensipleri kullanılmıştır:
 
-## Deploy on Vercel
+- **Dekoratörler**: Metot çağrılarını sarmak için
+- **Cross-Cutting Concerns**: Loglama, önbellekleme, yetkilendirme
+- **Method Interception**: Metot öncesi/sonrası işlemler
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## RBAC Özellikleri
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Bu projede şu RBAC prensipleri kullanılmıştır:
+
+- **Roller**: Admin, Manager, User, Guest
+- **İzinler**: Create, Read, Update, Delete
+- **Yetkilendirme**: Dekoratörler ve middleware'ler ile
+
+## Geliştirme
+
+### Servis Eklemek
+
+Yeni bir servis eklemek için `src/lib/services` klasörüne gidip yeni bir servis sınıfı oluşturun:
+
+```typescript
+import { Cache, Logger, RequirePermission } from '@/lib/aop/decorators';
+import { Permission } from '@/lib/auth/rbac';
+
+export class YeniServis {
+  private static instance: YeniServis;
+  
+  private constructor() {}
+  
+  public static getInstance(): YeniServis {
+    if (!YeniServis.instance) {
+      YeniServis.instance = new YeniServis();
+    }
+    return YeniServis.instance;
+  }
+  
+  @Cache()
+  @Logger
+  @RequirePermission(Permission.READ)
+  public async ornekMetot() {
+    // ...metot uygulaması
+  }
+}
+
+export const yeniServis = YeniServis.getInstance();
+```
+
+## Lisans
+
+MIT
